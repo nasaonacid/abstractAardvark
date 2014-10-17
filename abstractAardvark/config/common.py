@@ -112,7 +112,10 @@ class Common(Configuration):
 
     # DATABASE CONFIGURATION
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
-    DATABASES = values.DatabaseURLValue('postgres://localhost/abstractAardvark')
+    DATABASES = {'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase',
+    }}
     # END DATABASE CONFIGURATION
 
     # CACHING
