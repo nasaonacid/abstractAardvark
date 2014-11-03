@@ -15,6 +15,8 @@ console.log(height);
 console.log(width);
 
 var testTree = new Tree();
+testTree.largestWidth = 6;
+console.log("Tree width "+testTree.largestWidth);
 console.log("Tree depth "+treeDepth(testTree));
 setDepth(testTree,20);
 console.log("Tree depth "+treeDepth(testTree));
@@ -26,8 +28,9 @@ function initStage(){
 		width: width,
 		container: 'container' 
 	});
-	drawTHierrarchy(testTree);
 	console.log("Got to the right area");
+	drawTHierrarchy(testTree);
+
 	// drawHierrarchy();
 }
 
@@ -46,13 +49,16 @@ function drawTHierrarchy(tree){
 	var depth = treeDepth(tree);
 	if(depth!=null && depth!=0){
 		hPadding = height/(depth*2 + 1);
-		wPadding
 		var boxHeight = (height -(hPadding*(depth+2)))/depth;
-		var boxWidth = (width - ((tree.largestWidth+1)*wPadding(tree.largestWidth))*tree.largestWidth;
-		console.log(boxHeight);
+		console.log("Here "+boxHeight);
+		console.log("Here "+ tree.largestWidth);
+		var boxWidth = width/(2*tree.largestWidth+1)
+		console.log("box width ="+boxWidth);
+		console.log("pad width = "+ wPadding(tree.largestWidth,boxWidth));
+
 		var y = hPadding;
 		for(i = 0; i<depth;i++){
-			drawSlot(0,y,20,boxHeight);
+			drawSlot(0,y,boxWidth,boxHeight);
 			y = y+hPadding*2;
 		}
 		
@@ -62,7 +68,8 @@ function drawTHierrarchy(tree){
 }
 
 function wPadding(treeWidth,slotWidth){
-	return ((width/(2*x))-(slotWidth/2));
+			console.log("Here ");
+	return ((width-(slotWidth*treeWidth))/(treeWidth+1));
 }
 
 function drawSlot(x,y,w,h){
