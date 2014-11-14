@@ -20,6 +20,26 @@ console.log("Tree width "+testTree.largestWidth);
 console.log("Tree depth "+treeDepth(testTree));
 setDepth(testTree,20);
 console.log("Tree depth "+treeDepth(testTree));
+var jsObj = {
+  "largestWidth": 5, 
+  "Depth": 3, 
+  "tree": [
+    [
+      "i"
+    ], 
+    [
+      "am", 
+      "the", 
+      "greatest", 
+      "motherfucker", 
+      "ever"
+    ], 
+    [
+      "seen"
+    ]
+  ]
+};
+console.log(jsObj);
 
 function initStage(){
 	stage = new Kinetic.Stage({
@@ -29,7 +49,10 @@ function initStage(){
 		container: 'container' 
 	});
 	console.log("Got to the right area");
-	drawTHierrarchy(testTree);
+	// $.getJSON("http://www.bongcast.com/api/users/brett/?callback=?",function(data){
+	// });
+	
+	drawTHierrarchy(jsObj);
 
 	// drawHierrarchy();
 }
@@ -46,7 +69,8 @@ function drawHierrarchy(){
 	padHeight = stageheight/(depth *2 +1)
 */
 function drawTHierrarchy(tree){
-	var depth = treeDepth(tree);
+	var depth = tree.depth;
+	console.log
 	if(depth!=null && depth!=0){
 		hPadding = height/(depth*2 + 1);
 		var boxHeight = (height -(hPadding*(depth+2)))/depth;
@@ -58,7 +82,13 @@ function drawTHierrarchy(tree){
 
 		var y = hPadding;
 		for(i = 0; i<depth;i++){
-			drawSlot(0,y,boxWidth,boxHeight);
+			var wPad = wPadding(tree.container[i].length,boxWidth);
+			var x = wPad;
+			for (var node in tree.container[i]){
+				drawSlot(x,y,boxWidth,boxHeight);
+				x += wPad + boxWidth; 
+			}
+			
 			y = y+hPadding*2;
 		}
 		
