@@ -22,7 +22,7 @@ setDepth(testTree,20);
 console.log("Tree depth "+treeDepth(testTree));
 var jsObj = {
   "largestWidth": 5, 
-  "Depth": 3, 
+  "depth": 3, 
   "tree": [
     [
       "i"
@@ -77,15 +77,16 @@ function drawTHierrarchy(tree){
 		console.log("Here "+boxHeight);
 		console.log("Here "+ tree.largestWidth);
 		var boxWidth = width/(2*tree.largestWidth+1)
-		console.log("box width ="+boxWidth);
-		console.log("pad width = "+ wPadding(tree.largestWidth,boxWidth));
 
 		var y = hPadding;
+		var travelling = true;
 		for(i = 0; i<depth;i++){
-			var wPad = wPadding(tree.container[i].length,boxWidth);
+			if (i+1 == depth)
+				travelling = false;
+			var wPad = wPadding(tree.tree[i].length,boxWidth);
 			var x = wPad;
-			for (var node in tree.container[i]){
-				drawSlot(x,y,boxWidth,boxHeight);
+			for (var node in tree.tree[i]){
+				drawSlot(x,y,boxWidth,boxHeight,travelling);
 				x += wPad + boxWidth; 
 			}
 			
@@ -102,7 +103,7 @@ function wPadding(treeWidth,slotWidth){
 	return ((width-(slotWidth*treeWidth))/(treeWidth+1));
 }
 
-function drawSlot(x,y,w,h){
+function drawSlot(x,y,w,h,d){
 	var layer = new Kinetic.Layer();
 	var slot = new Kinetic.Rect({
 		x: x,
@@ -116,10 +117,14 @@ function drawSlot(x,y,w,h){
 	slots.push({x:slot.getAttr('x'),y:slot.getAttr('y')});
 	layer.add(slot);
 	stage.add(layer);
-	drawArrow(x+w/2,y+h);
+	if (d){
+		drawArrow(x+w/2,y+h);
+	}
+
 }
 
 function drawArrow(x,y){
+
 	var layer = new Kinetic.Layer();
 	var arrowHead = new Kinetic.RegularPolygon({
 		sides: 3,
