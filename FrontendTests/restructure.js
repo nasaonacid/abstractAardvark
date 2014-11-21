@@ -4,7 +4,7 @@ var pageWidth = $("#container").width();
 var pageHeight = $("#container").height();
 var hPadding;
 var hierrarchyLayer = new Kinetic.Layer();
-var answersLayer = new Kinetic.Layer();
+// var answersLayer = new Kinetic.Layer();
 
 if(pageWidth == null)
 	pageWidth = 1024;
@@ -31,6 +31,7 @@ function initStage(){
 	drawAnswers(tree);
 	console.log(stage);
 	stage.add(hierrarchyLayer);
+	console.log(hierrarchyLayer.find('#object'));
 	// stage.add(answersLayer);
 
 }
@@ -46,6 +47,7 @@ function createHierrarchy(tree){
 		var y = hPadding;
 		for (i = 0; i < depth; i++){
 			var widthPadding = wPadding(tree.contents[i].length,boxWidth);
+			console.log("widthPadding " + widthPadding);
 			var x = widthPadding;
 			for (j = 0; j <tree.contents[i].length; j++){
 				tree.contents[i][j].x = x;
@@ -54,8 +56,8 @@ function createHierrarchy(tree){
 			}
 			y += hPadding*2;
 		}
-	console.log(tree);
-	console.log(tree.contents);
+	// console.log(tree);
+	// console.log(tree.contents);
 	}
 	else
 		console.log("empty tree error");
@@ -148,9 +150,53 @@ function drawAnswers(tree){
 		        fill: 'black'
 // tree.contents[i][j].content
 			});
-			var group = new Kinetic.Group({draggable: true})
+			var group = new Kinetic.Group({
+				draggable: true
+			});
 			group.add(rect);
 			group.add(text);
+			group.on('mouseover touchstart', function(evt) {
+              evt.target.strokeWidth(2);
+              hierrarchyLayer.draw();
+              document.body.style.cursor = 'pointer';
+            });
+            // return animal on mouseout
+            group.on('mouseout touchend', function(evt) {
+              evt.target.strokeWidth(1);
+              hierrarchyLayer.draw();
+              document.body.style.cursor = 'default';
+            });
+            group.on('dragstart', function() {
+              this.moveToTop();
+              hierrarchyLayer.draw();
+            });
+            group.on('dragend', function(evt) {
+            	var current = evt.target.find('Rect')[0]
+            	var id = current.getAttr('id');
+            	current = evt.target;
+            	var solution = hierrarchyLayer.find('#object')[0];
+            	console.log(solution);
+            	console.log("here");
+            	// console.log("current" + current.getAttr('y'));
+
+              	// console.log(Math.abs(current.getAttr('x')-solution.getAttr('x')));
+              // console.log(hierrarchyLayer.find('#'+evt.target.id));
+                var xComp = current.getAttr('x') + evt.target.find('Rect')[0].getAttr('x');
+                var yComp = current.getAttr('y') + evt.target.find('Rect')[0].getAttr('y');
+	            console.log("current " + xComp + " , " + yComp);
+	          	console.log("solution" + solution.getAttr('x') + "," + solution.getAttr('y'));
+
+                if(Math.abs(xComp-solution.getAttr('x')) <= 50 &&  Math.abs(yComp-solution.getAttr('y'))<=50){
+	                console.log("MICHAEL AND GAVIN ARE LOVERS");
+	                evt.target.setPosition({x:solution.getAttr('x'), y:solution.getAttr('y')});
+	                hierrarchyLayer.draw();
+	                // disable drag and drop
+	                setTimeout(function() {
+	                  evt.setDraggable(false);
+	                }, 50);
+	            }
+            });
+
 			hierrarchyLayer.add(group);
 			x += tree.boxWidth;
 		}

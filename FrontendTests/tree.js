@@ -47,9 +47,10 @@ function makeTree(){
 	var layer2 = [];
 	var layer3 = [];
 	
-	var node = new Node("object", [0,1],0,0);
+	var node = new Node('object', [0,1],0,0);
 	var node2 = new Node("natural", [0,1],0,0);
 	var node3 = new Node("manmade",[2,3,4],0,0);
+	// var node3 = new Node("manmade",[],0,0);
 	var node4 = new Node("fruit",null,0,0);
 	var node5 = new Node("vegetable",null,0,0);
 	var node6 = new Node("automobile",null,0,0);
