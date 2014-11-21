@@ -4,7 +4,9 @@ var pageWidth = $("#container").width();
 var pageHeight = $("#container").height();
 var hPadding;
 var hierrarchyLayer = new Kinetic.Layer();
-// var answersLayer = new Kinetic.Layer();
+var arrowLayer = new Kinetic.Layer();
+var interimSolution;
+var answerLayer = new Kinetic.Layer();
 
 if(pageWidth == null)
 	pageWidth = 1024;
@@ -27,12 +29,15 @@ function initStage(){
 	console.log("Got to the right area");
 	createHierrarchy(tree);
 	drawHierrarchy(tree);
+	// console.log(interimSolution);
 	drawConnections(tree);
 	drawAnswers(tree);
+	stage.add(arrowLayer);
 	console.log(stage);
 	stage.add(hierrarchyLayer);
+	stage.add(answerLayer);
 	console.log(hierrarchyLayer.find('#object'));
-	// stage.add(answersLayer);
+
 
 }
 
@@ -89,7 +94,9 @@ function drawSlot(x,y,w,h,id){
 		id: id,
 		strokeWidth: 1
 	});
+	// interimSolution.push({id:[x,y]});
 	return slot;
+
 	// stage.add(layer);
 }
 
@@ -113,22 +120,22 @@ function drawArrow(x,y,x1,y1,h){
 	var arrowHead = new Kinetic.RegularPolygon({
 		sides: 3,
 		x: x,
-		y: y+5,
-		radius: 5,
-		fill: 'black',
+		y: y+7,
+		radius: 7,
+		fill: 'white',
 		stroke: 'black',
 		strokeWidth: 1
 
 	});
-	console.log(arrowHead);
 	var arrowLine = new Kinetic.Line({
   		points: [arrowHead.getAttr('x'),arrowHead.getAttr('y'),arrowHead.getAttr('x'),arrowHead.getAttr('y') + h/2, x1, arrowHead.getAttr('y') + h/2, x1, y1],
   		stroke: 'black'
 	});
+	var group = new Kinetic.Group();
 
-	layer.add(arrowLine);
-	layer.add(arrowHead);
-	stage.add(layer);
+	group.add(arrowLine);
+	group.add(arrowHead);
+	arrowLayer.add(group);
 }
 
 function drawAnswers(tree){
@@ -136,12 +143,12 @@ function drawAnswers(tree){
 	var y = hPadding*tree.depth*2;
 	for (i = 0; i < tree.depth; i++){
 		for (j = 0; j <tree.contents[i].length; j++){
-			var rect = drawSlot(x,y, tree.boxWidth, tree.boxHeight,tree.contents[i][j].content);
+			var rect = drawSlot(0,0, tree.boxWidth, tree.boxHeight,tree.contents[i][j].content);
 			var text = new Kinetic.Text({
 				align: "center",
 				// text: "tits",
-				x: x,
-				y: y+tree.boxHeight/3,
+				x: 0,
+				y: 0+(tree.boxHeight/3),
 				height: tree.boxHeight,
 				width: tree.boxWidth,
 				text: tree.contents[i][j].content,
@@ -151,13 +158,15 @@ function drawAnswers(tree){
 // tree.contents[i][j].content
 			});
 			var group = new Kinetic.Group({
-				draggable: true
+				draggable: true,
+				x: x,
+				y: y
 			});
 			group.add(rect);
 			group.add(text);
 			group.on('mouseover touchstart', function(evt) {
               evt.target.strokeWidth(2);
-              hierrarchyLayer.draw();
+              answerLayer.draw();
               document.body.style.cursor = 'pointer';
             });
             // return animal on mouseout
@@ -167,37 +176,46 @@ function drawAnswers(tree){
               document.body.style.cursor = 'default';
             });
             group.on('dragstart', function() {
-              this.moveToTop();
-              hierrarchyLayer.draw();
+              	this.moveToTop();
+             	stage.draw();
             });
             group.on('dragend', function(evt) {
             	var current = evt.target.find('Rect')[0]
             	var id = current.getAttr('id');
             	current = evt.target;
-            	var solution = hierrarchyLayer.find('#object')[0];
-            	console.log(solution);
-            	console.log("here");
-            	// console.log("current" + current.getAttr('y'));
+            	var solution = hierrarchyLayer.find('Rect');
+            	for(i = 0; i<solution.length; i++){
+            		console.log(solution[i]);
+            		if (solution[i].getAttr('id') == id){
+            			solution = solution[i];
+            			break;
+            		}
+            	}
 
-              	// console.log(Math.abs(current.getAttr('x')-solution.getAttr('x')));
-              // console.log(hierrarchyLayer.find('#'+evt.target.id));
-                var xComp = current.getAttr('x') + evt.target.find('Rect')[0].getAttr('x');
-                var yComp = current.getAttr('y') + evt.target.find('Rect')[0].getAttr('y');
+     
+                var xComp = current.getAttr('x') ;
+                var yComp = current.getAttr('y') ;
 	            console.log("current " + xComp + " , " + yComp);
 	          	console.log("solution" + solution.getAttr('x') + "," + solution.getAttr('y'));
 
                 if(Math.abs(xComp-solution.getAttr('x')) <= 50 &&  Math.abs(yComp-solution.getAttr('y'))<=50){
-	                console.log("MICHAEL AND GAVIN ARE LOVERS");
-	                evt.target.setPosition({x:solution.getAttr('x'), y:solution.getAttr('y')});
-	                hierrarchyLayer.draw();
+	                var no1 = xComp-solution.getAttr('x');
+	                console.log(no1);
+	                var no2 = yComp-solution.getAttr('y');
+	                
+	                current.setAttr('x',solution.getAttr('x'));
+	                current.setAttr('y',solution.getAttr('y'));
+	                current.find('Rect')[0].setAttr('stroke','green');
+	                stage.draw();
+	             	console.log(evt.target.find('Rect')[0]);
 	                // disable drag and drop
 	                setTimeout(function() {
-	                  evt.setDraggable(false);
+	                  evt.target.setDraggable(false);
 	                }, 50);
 	            }
             });
 
-			hierrarchyLayer.add(group);
+			answerLayer.add(group);
 			x += tree.boxWidth;
 		}
 	
