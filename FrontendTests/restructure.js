@@ -3,6 +3,8 @@ var stage;
 var pageWidth = $("#container").width();
 var pageHeight = $("#container").height();
 var hPadding;
+var hierrarchyLayer = new Kinetic.Layer();
+var answersLayer = new Kinetic.Layer();
 
 if(pageWidth == null)
 	pageWidth = 1024;
@@ -26,6 +28,10 @@ function initStage(){
 	createHierrarchy(tree);
 	drawHierrarchy(tree);
 	drawConnections(tree);
+	drawAnswers(tree);
+	console.log(stage);
+	stage.add(hierrarchyLayer);
+	// stage.add(answersLayer);
 
 }
 
@@ -34,7 +40,7 @@ function createHierrarchy(tree){
 	if(depth!=null && depth>0){
 		hPadding = pageHeight/(depth*2 + 1);
 		var boxHeight = (pageHeight - (hPadding * (depth + 2)))/depth;
-		var boxWidth = pageWidth/(2*tree.largestWidth+1);
+		var boxWidth = pageWidth/(2*tree.largestWidth+2);
 		tree.boxHeight = boxHeight;
 		tree.boxWidth = boxWidth;
 		var y = hPadding;
@@ -62,25 +68,27 @@ function wPadding(treeWidth,slotWidth){
 function drawHierrarchy(tree){
 	for (i = 0; i < tree.depth; i++){
 		for (j = 0; j <tree.contents[i].length; j++){
-			drawSlot(tree.contents[i][j].x,tree.contents[i][j].y, tree.boxWidth, tree.boxHeight);
+			hierrarchyLayer.add(drawSlot(tree.contents[i][j].x,tree.contents[i][j].y, tree.boxWidth, tree.boxHeight,tree.contents[i][j].content));
 		}
 	
 	}
 }
 
-function drawSlot(x,y,w,h){
-	var layer = new Kinetic.Layer();
+function drawSlot(x,y,w,h,id){
+	// var layer = new Kinetic.Layer();
+
 	var slot = new Kinetic.Rect({
 		x: x,
 		y: y,
 		height: h,
 		width: w,
-		fill: 'rgba(255,255,255,0.0)',
+		fill: 'rgba(255,255,255,1)',
 		stroke:'black',
+		id: id,
 		strokeWidth: 1
 	});
-	layer.add(slot);
-	stage.add(layer);
+	return slot;
+	// stage.add(layer);
 }
 
 function drawConnections(tree){
@@ -120,3 +128,33 @@ function drawArrow(x,y,x1,y1,h){
 	layer.add(arrowHead);
 	stage.add(layer);
 }
+
+function drawAnswers(tree){
+	var x = 0
+	var y = hPadding*tree.depth*2;
+	for (i = 0; i < tree.depth; i++){
+		for (j = 0; j <tree.contents[i].length; j++){
+			var rect = drawSlot(x,y, tree.boxWidth, tree.boxHeight,tree.contents[i][j].content);
+			var text = new Kinetic.Text({
+				align: "center",
+				// text: "tits",
+				x: x,
+				y: y+tree.boxHeight/3,
+				height: tree.boxHeight,
+				width: tree.boxWidth,
+				text: tree.contents[i][j].content,
+		        fontSize: 15,
+		        fontFamily: 'Calibri',
+		        fill: 'black'
+// tree.contents[i][j].content
+			});
+			var group = new Kinetic.Group({draggable: true})
+			group.add(rect);
+			group.add(text);
+			hierrarchyLayer.add(group);
+			x += tree.boxWidth;
+		}
+	
+	}
+}
+
