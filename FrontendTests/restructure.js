@@ -1,24 +1,35 @@
-var stage;
+/*
+	Restructured tree generation and validation code. 
+*/
 
+//declaration of global variables 
+var stage;
 var pageWidth = $("#container").width();
 var pageHeight = $("#container").height();
 var hPadding;
 var hierrarchyLayer = new Kinetic.Layer();
 var arrowLayer = new Kinetic.Layer();
-var interimSolution;
 var answerLayer = new Kinetic.Layer();
+
+//instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
 
 if(pageWidth == null)
 	pageWidth = 1024;
 if (pageHeight == null)
 	pageHeight = 800;
 
-console.log(pageHeight);
-console.log(pageWidth);
+// console.log(pageHeight);
+// console.log(pageWidth);
 
+//tree creation 
 var tree = makeTree();
 console.log(tree);
 
+
+/*
+	function to initialise the canvas for the tree structure as well as to call functions 
+	which assign x,y coords to tree elements and then draw the over arching tree structure and answers. 
+*/
 function initStage(){
 	stage = new Kinetic.Stage({
 		draggable: false,
@@ -41,6 +52,15 @@ function initStage(){
 
 }
 
+/*
+	Function calculates the x and y coords of every node in the tree and adds it to the node in the tree structure.
+	It also calculates the vertical and horizontal paddings as well as the node representation height and width. 
+
+	
+	Vertical padding = total page height divided by the total tree depth * 2 + 1
+	Horizontal Padding = the total page width - boxwidth * level width all divided by the tree width + 1
+
+*/
 function createHierrarchy(tree){
 	var depth = tree.depth;
 	if(depth!=null && depth>0){
@@ -68,10 +88,12 @@ function createHierrarchy(tree){
 		console.log("empty tree error");
 }
 
+//returns the width padding for each level 
 function wPadding(treeWidth,slotWidth){
 	return ((pageWidth-(slotWidth*treeWidth))/(treeWidth+1));
 }
 
+//draws the tree structure
 function drawHierrarchy(tree){
 	for (i = 0; i < tree.depth; i++){
 		for (j = 0; j <tree.contents[i].length; j++){
@@ -80,6 +102,9 @@ function drawHierrarchy(tree){
 	
 	}
 }
+
+
+//draws the slot for each box
 
 function drawSlot(x,y,w,h,id){
 	// var layer = new Kinetic.Layer();
@@ -100,6 +125,8 @@ function drawSlot(x,y,w,h,id){
 	// stage.add(layer);
 }
 
+
+//sorts through each layer of the tree and draws the connections between each node. 
 function drawConnections(tree){
 	for (i = 0; i < tree.depth-1; i++){
 		for (j = 0; j <tree.contents[i].length; j++){
@@ -113,6 +140,11 @@ function drawConnections(tree){
 	}
 }
 
+
+/*
+	Draws the arrows between nodes on the tree. The line is made by
+	getting the x and y coords for the arrowhead and for the second one. 
+*/
 
 function drawArrow(x,y,x1,y1,h){
 
@@ -138,9 +170,17 @@ function drawArrow(x,y,x1,y1,h){
 	arrowLayer.add(group);
 }
 
+/*
+	Creates a movable grouping of the box outline 
+*/
+
 function drawAnswers(tree){
+
+	//set the x and y coordinates so that we start at the lowest area. 
 	var x = 0
 	var y = hPadding*tree.depth*2;
+	
+	//create a grouping of rectangle, text and a line to make a uml box answer
 	for (i = 0; i < tree.depth; i++){
 		for (j = 0; j <tree.contents[i].length; j++){
 			var rect = drawSlot(0,0, tree.boxWidth, tree.boxHeight,tree.contents[i][j].content);
@@ -148,7 +188,7 @@ function drawAnswers(tree){
 				align: "center",
 				// text: "tits",
 				x: 0,
-				y: 0+(tree.boxHeight/3),
+				y: 3,
 				height: tree.boxHeight,
 				width: tree.boxWidth,
 				text: tree.contents[i][j].content,
@@ -157,6 +197,11 @@ function drawAnswers(tree){
 		        fill: 'black'
 // tree.contents[i][j].content
 			});
+			var line = new Kinetic.Line({
+				points: [0,0+(tree.boxHeight/4),tree.boxWidth,0+(tree.boxHeight/4)],
+				stroke: 'black',
+				strokeWidth: 1
+			});
 			var group = new Kinetic.Group({
 				draggable: true,
 				x: x,
@@ -164,22 +209,31 @@ function drawAnswers(tree){
 			});
 			group.add(rect);
 			group.add(text);
+			group.add(line);
+
+			//on mouse over a box highlight the box
 			group.on('mouseover touchstart', function(evt) {
               evt.target.strokeWidth(2);
               answerLayer.draw();
               document.body.style.cursor = 'pointer';
             });
-            // return animal on mouseout
+            // when the mouse leaves the box, unhighlight the box
             group.on('mouseout touchend', function(evt) {
               evt.target.strokeWidth(1);
               hierrarchyLayer.draw();
               document.body.style.cursor = 'default';
             });
+
+            //handler for drag event.
             group.on('dragstart', function() {
               	this.moveToTop();
              	stage.draw();
             });
+
+            //hnaadler for drag drop event
             group.on('dragend', function(evt) {
+
+            	//locate the corresponding blank box. 
             	var current = evt.target.find('Rect')[0]
             	var id = current.getAttr('id');
             	current = evt.target;
@@ -192,12 +246,13 @@ function drawAnswers(tree){
             		}
             	}
 
-     
+     			//get the current coordinates of the dragged box. 
                 var xComp = current.getAttr('x') ;
                 var yComp = current.getAttr('y') ;
 	            console.log("current " + xComp + " , " + yComp);
 	          	console.log("solution" + solution.getAttr('x') + "," + solution.getAttr('y'));
 
+	          	//check if the current location is within a certain reach of the correspondant answer. 
                 if(Math.abs(xComp-solution.getAttr('x')) <= 50 &&  Math.abs(yComp-solution.getAttr('y'))<=50){
 	                var no1 = xComp-solution.getAttr('x');
 	                console.log(no1);
