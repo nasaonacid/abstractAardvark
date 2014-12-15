@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<script type="text/javascript", src="jquery-1.11.1.min.js"></script>
-		<script type="text/javascript", src="kinetic-v5.1.0.min.js"></script>
-		<script type="text/javascript", src="tree.js"></script>
+
 		<!-- // <script type="text/javascript", src="inheritanceTree.js"></script> -->
-		<script type="text/javascript", src="restructure.js"></script>
+
 	</head>
 	<body>
-		<div id = "container"></div>
-		<script type="text/javascript", defer = "defer">
-			initStage();
-
-		</script>
+		<div id = "container"  class = "row"></div>
+		
+		
 	</body>
+
+	<script type="text/javascript" src="jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="kinetic-v5.1.0.min.js"></script>
+	<script type="text/javascript" src="tree.js"></script>
+	<script type="text/javascript" src="restructure.js"></script>
+	<script type="text/javascript">
+	 	$(window).resize(function(){
+	 		adjustments();
+	 	});
+	</script>
+
 </html>

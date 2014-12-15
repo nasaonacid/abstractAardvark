@@ -5,11 +5,14 @@
 //declaration of global variables 
 var stage;
 var pageWidth = $("#container").width();
-var pageHeight = $("#container").height();
+var pageHeight = $(window).height();
 var hPadding;
 var hierrarchyLayer = new Kinetic.Layer();
 var arrowLayer = new Kinetic.Layer();
 var answerLayer = new Kinetic.Layer();
+
+var originalWidth = pageWidth;
+var originalHeight = pageHeight;
 
 //instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
 
@@ -18,14 +21,14 @@ if(pageWidth == null)
 if (pageHeight == null)
 	pageHeight = 800;
 
-// console.log(pageHeight);
-// console.log(pageWidth);
+console.log(pageHeight);
+console.log(pageWidth);
 
 //tree creation 
 var tree = makeTree();
 console.log(tree);
 
-
+initStage();
 /*
 	function to initialise the canvas for the tree structure as well as to call functions 
 	which assign x,y coords to tree elements and then draw the over arching tree structure and answers. 
@@ -48,6 +51,7 @@ function initStage(){
 	stage.add(hierrarchyLayer);
 	stage.add(answerLayer);
 	console.log(hierrarchyLayer.find('#object'));
+	console.log("Finished");
 
 
 }
@@ -232,42 +236,32 @@ function drawAnswers(tree){
 
             //hnaadler for drag drop event
             group.on('dragend', function(evt) {
+        		var closestMatch = checkDrop(evt.target);
+        		if(closestMatch != null){
+        			console.log(evt.target.getAttr('x'));
+        			console.log(closestMatch.x);
+        			console.log(evt.target.getAttr('y'));
+        			console.log(closestMatch.y);
+        			if(Math.abs(evt.target.getAttr('x')-closestMatch.x)<=50 && Math.abs(evt.target.getAttr('y')-closestMatch.y)<=50){
+        				evt.target.setAttr('x',closestMatch.x);
+        				evt.target.setAttr('y',closestMatch.y);
+    					console.log("ITS A MATCH");
+        				if (evt.target.find('Rect')[0].getAttr('id') == closestMatch.content){
 
-            	//locate the corresponding blank box. 
-            	var current = evt.target.find('Rect')[0]
-            	var id = current.getAttr('id');
-            	current = evt.target;
-            	var solution = hierrarchyLayer.find('Rect');
-            	for(i = 0; i<solution.length; i++){
-            		console.log(solution[i]);
-            		if (solution[i].getAttr('id') == id){
-            			solution = solution[i];
-            			break;
-            		}
-            	}
+        					evt.target.find('Rect')[0].setAttr('stroke','green');
+        					stage.draw();
 
-     			//get the current coordinates of the dragged box. 
-                var xComp = current.getAttr('x') ;
-                var yComp = current.getAttr('y') ;
-	            console.log("current " + xComp + " , " + yComp);
-	          	console.log("solution" + solution.getAttr('x') + "," + solution.getAttr('y'));
-
-	          	//check if the current location is within a certain reach of the correspondant answer. 
-                if(Math.abs(xComp-solution.getAttr('x')) <= 50 &&  Math.abs(yComp-solution.getAttr('y'))<=50){
-	                var no1 = xComp-solution.getAttr('x');
-	                console.log(no1);
-	                var no2 = yComp-solution.getAttr('y');
-	                
-	                current.setAttr('x',solution.getAttr('x'));
-	                current.setAttr('y',solution.getAttr('y'));
-	                current.find('Rect')[0].setAttr('stroke','green');
-	                stage.draw();
-	             	console.log(evt.target.find('Rect')[0]);
-	                // disable drag and drop
-	                setTimeout(function() {
-	                  evt.target.setDraggable(false);
-	                }, 50);
-	            }
+			                // disable drag and drop
+			                setTimeout(function() {
+			                  evt.target.setDraggable(false);
+			                }, 50);
+        				}
+        				else{
+        					evt.target.find('Rect')[0].setAttr('stroke','red');
+        					stage.draw();
+        				}
+        			}
+        		}
             });
 
 			answerLayer.add(group);
@@ -277,3 +271,44 @@ function drawAnswers(tree){
 	}
 }
 
+function checkDrop(item){
+	var x = item.getAttr('x');
+	var y = item.getAttr('y');
+
+	for (i = 0; i <tree.depth; i++){
+		for(j=0;j<tree.contents[i].length;j++){
+			var currentX = tree.contents[i][j].x;
+			var currentY = tree.contents[i][j].y;
+			if(Math.abs(x - currentX) <= 50 && Math.abs(y-currentY)<=50){
+				item.setAttr('x', currentX);
+				item.setAttr('y', currentY);
+				console.log(tree.contents[i][j].content);
+				console.log(item.find('Rect')[0].getAttr('id'));			
+
+				return tree.contents[i][j];
+			}
+		}
+	}
+	return null;
+}
+
+function adjustments(){
+	console.log("DO YOU WANNA BUILD A SNOWMAN?");
+	pageWidth = $(window).width();
+	pageHeight = $(window).height();
+	var xRatio = pageWidth/originalWidth;
+	var yRatio = pageHeight/originalHeight;
+	console.log(originalHeight);
+	console.log(xRatio);
+	console.log(yRatio);
+	
+	console.log(pageHeight);
+
+	stage.setAttr('width',pageWidth);
+	stage.setAttr('height',pageHeight);
+	
+	stage.setScaleX(xRatio);
+	stage.setScaleY(yRatio);
+	stage.draw();
+
+}
