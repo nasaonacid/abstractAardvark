@@ -209,7 +209,26 @@ function drawAnswers(tree){
 			var group = new Kinetic.Group({
 				draggable: true,
 				x: x,
-				y: y
+				y: y,
+				dragBoundFunc: function(pos) {
+		            var newX = pos.x;
+		            var newY = pos.y;
+		            if(pos.x < 0)
+		            	newX = 0;
+		            if(pos.x+tree.boxWidth>pageWidth)
+		            	newX = pageWidth-tree.boxWidth;
+		            if(pos.y < 0)
+		            	newY = 0;
+		            if(pos.y+tree.boxHeight>pageHeight)
+		            	newY = pageHeight - tree.boxHeight;
+
+
+		             
+		            return {
+		            	x: newX,
+		            	y: newY
+		            };
+		        }
 			});
 			group.add(rect);
 			group.add(text);
