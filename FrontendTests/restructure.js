@@ -27,6 +27,8 @@ console.log(pageWidth);
 //tree creation 
 var tree = makeTree();
 console.log(tree);
+tree.completion = 0;
+console.log("completion init" + tree.completion);
 
 initStage();
 /*
@@ -66,10 +68,10 @@ function initStage(){
 
 */
 function createHierrarchy(tree){
-	var depth = tree.depth;
-	if(depth!=null && depth>0){
-		hPadding = pageHeight/(depth*2 + 1);
-		var boxHeight = (pageHeight - (hPadding * (depth + 2)))/depth;
+	var depth = tree.depth; //get tree depth
+	if(depth!=null && depth>0){//if not empty
+		hPadding = pageHeight/(depth*2 + 1);//calculate horizontal padding
+		var boxHeight = (pageHeight - (hPadding * (depth + 2)))/depth;//calculate width and height for boxes
 		var boxWidth = pageWidth/(2*tree.largestWidth+2);
 		tree.boxHeight = boxHeight;
 		tree.boxWidth = boxWidth;
@@ -190,7 +192,6 @@ function drawAnswers(tree){
 			var rect = drawSlot(0,0, tree.boxWidth, tree.boxHeight,tree.contents[i][j].content);
 			var text = new Kinetic.Text({
 				align: "center",
-				// text: "tits",
 				x: 0,
 				y: 3,
 				height: tree.boxHeight,
@@ -202,7 +203,7 @@ function drawAnswers(tree){
 // tree.contents[i][j].content
 			});
 			var line = new Kinetic.Line({
-				points: [0,0+(tree.boxHeight/4),tree.boxWidth,0+(tree.boxHeight/4)],
+				points: [0,18,tree.boxWidth,18],
 				stroke: 'black',
 				strokeWidth: 1
 			});
@@ -248,27 +249,40 @@ function drawAnswers(tree){
             });
 
             //handler for drag event.
-            group.on('dragstart', function() {
+            group.on('dragstart', function(evt) {
               	this.moveToTop();
+              	var closestMatch = checkDrop(evt.target);
+              	if(closestMatch != null){
+              		if(tree.contents[closestMatch.i][closestMatch.j].correctMap!=true)
+              			tree.contents[closestMatch.i][closestMatch.j].matched = false;
+              	}
              	stage.draw();
             });
 
             //hnaadler for drag drop event
             group.on('dragend', function(evt) {
         		var closestMatch = checkDrop(evt.target);
-        		if(closestMatch != null){
-        			console.log(evt.target.getAttr('x'));
-        			console.log(closestMatch.x);
-        			console.log(evt.target.getAttr('y'));
-        			console.log(closestMatch.y);
-        			if(Math.abs(evt.target.getAttr('x')-closestMatch.x)<=50 && Math.abs(evt.target.getAttr('y')-closestMatch.y)<=50){
-        				evt.target.setAttr('x',closestMatch.x);
-        				evt.target.setAttr('y',closestMatch.y);
-    					console.log("ITS A MATCH");
-        				if (evt.target.find('Rect')[0].getAttr('id') == closestMatch.content){
 
+        		console.log("what up dawg "+ closestMatch);
+        		if(closestMatch != null){
+	        		closestMatch.x = tree.contents[closestMatch.i][closestMatch.j].x;
+	        		closestMatch.y = tree.contents[closestMatch.i][closestMatch.j].y;
+
+					
+					console.log(tree.contents[closestMatch.i][closestMatch.j].matched);
+        			if(tree.contents[closestMatch.i][closestMatch.j].matched == false){	
+        				console.log("ITS A MATCH");
+	    				evt.target.setAttr('x',closestMatch.x);
+	    				evt.target.setAttr('y',closestMatch.y);
+        				tree.contents[closestMatch.i][closestMatch.j].matched = true;
+        				if (evt.target.find('Rect')[0].getAttr('id') == tree.contents[closestMatch.i][closestMatch.j].content ){
+        					
+        					tree.contents[closestMatch.i][closestMatch.j].correctMap = true;
+        					tree.completion++;
+        					console.log("number to completion = "+ (tree.totalSize - tree.completion));
         					evt.target.find('Rect')[0].setAttr('stroke','green');
         					stage.draw();
+
 
 			                // disable drag and drop
 			                setTimeout(function() {
@@ -299,13 +313,9 @@ function checkDrop(item){
 			var currentX = tree.contents[i][j].x;
 			var currentY = tree.contents[i][j].y;
 			if(Math.abs(x - currentX) <= 50 && Math.abs(y-currentY)<=50){
-				item.setAttr('x', currentX);
-				item.setAttr('y', currentY);
-				console.log(tree.contents[i][j].content);
-				console.log(item.find('Rect')[0].getAttr('id'));			
-
-				return tree.contents[i][j];
+				return {i:i, j:j};
 			}
+			
 		}
 	}
 	return null;

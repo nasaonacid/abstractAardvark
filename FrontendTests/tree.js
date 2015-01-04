@@ -31,14 +31,20 @@
 function TreeStructure(width,contents){
 	this.largestWidth = width;
 	this.depth = contents.length;
-	this.contents = contents
+	this.contents = contents;
+	this.totalSize = 0;
+	for (var i=0; i<this.depth; i++) {
+		this.totalSize += contents[i].length;
+	}
 }
 
 function Node(content, children, x, y){
 	this.content = content;
 	this.children = children;
 	this.x = x;
-	this.y = y; 
+	this.y = y;
+	this.matched = false;
+	this.correctMap = false;
 }
 
 function makeTree(){
@@ -71,5 +77,6 @@ function makeTree(){
 
 	
 	var x = new TreeStructure(3,contentList);
+	console.log(x.totalSize);
 	return x;
 }
