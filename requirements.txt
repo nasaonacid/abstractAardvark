@@ -1,2 +1,7 @@
-Django==1.7
-Pillow==2.7.0
+Django (1.7)
+django-mptt (0.6.1)
+djangorestframework (3.0.3)
+Pillow (2.7.0)
+pip (1.4.1)
+setuptools (0.9.8)
+wsgiref (0.1.2)

@@ -35,33 +35,35 @@ def game_list(request):
             return JSONResponse(serializer.data, status=201)
         return JSONResponse(serializer.errors, status=400)
 
+@csrf_exempt
 def game_detail(request,pk):
-	"""
-	Retrieve a new game, and verify answers
+    """
+    Retrieve a new game, and verify answers
 
-	"""
-	try:
-		game = Tree.objects.get(pk = pk)
-	except Tree.DoesNotExist:
-		return HttpResponse(status = 404)
+    """
+    try:
+        game = Tree.objects.get(pk = pk)
+    except Tree.DoesNotExist:
+        return HttpResponse(status = 404)
 
-	if request.method == 'GET':
-		serializer = TreeSerializer(game);
-		data = serializer.data
-		answers = []
-		data_to_process = []
-		data_to_process.append(data['root'])
-		while data_to_process:
-			temp = data_to_process.pop()
-			answers.append(temp['content'])
-			temp['content'] = ''
-			for i in temp['children']:
-				data_to_process.append(i)
-		data['answers'] = answers
-		print  answers
-		print data['height']
-		return JSONResponse(data)
-	elif request.method == 'POST':
-		return JSONResponse(serializer.errors, status=400)
-	elif request.method == 'DELETE':
-		return JSONResponse(serializer.errors, status=400)
+    if request.method == 'GET':
+        serializer = TreeSerializer(game);
+        data = serializer.data
+        answers = []
+        data_to_process = []
+        data_to_process.append(data['root'])
+        while data_to_process:
+            temp = data_to_process.pop()
+            answers.append(temp['content'])
+            temp['content'] = ''
+            for i in temp['children']:
+                data_to_process.append(i)
+        data['answers'] = answers
+        return JSONResponse(data)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = TreeSerializer(data = data)
+        serializer.is_valid()
+        return JSONResponse(serializer.errors,status=400)
+    elif request.method == 'DELETE':
+        return JSONResponse(serializer.errors, status=400)
