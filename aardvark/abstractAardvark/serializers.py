@@ -1,25 +1,23 @@
 from rest_framework import serializers
 from django.core.validators import MaxValueValidator, MinValueValidator
-from abstractAardvark.models import CHOICES
+from abstractAardvark.models import Node, Tree
 
 
-class NodeSerializer(serializers.Serializer):
-    content = serializers.CharField()
-    depth = serializers.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)])
-    children = None
+class NodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Node
+        fields = ('content','children')
+        depth = 1
 
-    def validate(self, data):
-        print data
-        return data
+ 
+# NodeSerializer._declared_fields['parent'] = NodeSerializer()
+NodeSerializer._declared_fields['children'] = NodeSerializer(many=True)#no self referential calls can be made with rest serializers. This is a potential work around from http://stackoverflow.com/questions/13376894/django-rest-framework-nested-self-referential-objects()
 
-NodeSerializer.children = NodeSerializer(many=True)#no self referential calls can be made with rest serializers. This is a potential work around from http://stackoverflow.com/questions/13376894/django-rest-framework-nested-self-referential-objects()
-
-class TreeSerializer(serializers.Serializer):
+class TreeSerializer(serializers.ModelSerializer):
+    root = NodeSerializer()
     
-    depth = serializers.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)])
-    difficulty = serializers.ChoiceField(CHOICES,default = 'easy')
-    content = NodeSerializer()
-
-    def create(self, **validated_data):
-        return Tree.create.object(**validated_data)
+    class Meta:
+        model = Tree
+        fields = ('height','difficulty','root')
+        depth = 1
 
