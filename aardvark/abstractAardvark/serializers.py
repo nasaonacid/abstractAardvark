@@ -6,7 +6,7 @@ from abstractAardvark.models import Node, Tree
 class NodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Node
-        fields = ('content','children')
+        fields = ('content','level','children')
         depth = 1
 
  
