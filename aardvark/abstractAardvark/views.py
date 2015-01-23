@@ -32,6 +32,7 @@ def game_list(request):
         serializer = TreeSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
+            
             return JSONResponse(serializer.data, status=201)
         return JSONResponse(serializer.errors, status=400)
 
@@ -67,3 +68,4 @@ def game_detail(request,pk):
         return JSONResponse(serializer.errors,status=400)
     elif request.method == 'DELETE':
         return JSONResponse(serializer.errors, status=400)
+
