@@ -1,23 +1,16 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.renderers import JSONRenderer
-from rest_framework.parsers import JSONParser
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import api_view
 from abstractAardvark.models import Tree
 from abstractAardvark.serializers import NodeSerializer, TreeSerializer
 
-class JSONResponse(HttpResponse):
-    """
-    An HttpResponse that renders its content into JSON.
-    """
-    def __init__(self, data, **kwargs):
-        content = JSONRenderer().render(data)
-        print type(content)
-        kwargs['content_type'] = 'application/json'
-        super(JSONResponse, self).__init__(content, **kwargs)
 
-@csrf_exempt
-def game_list(request):
+
+@api_view(['GET','POST'])
+def game_list(request,format = None):
     """
     List all code snippets, or create a new snippet.
     """
@@ -25,19 +18,18 @@ def game_list(request):
         trees = Tree.objects.all()
         serializer = TreeSerializer(trees, many=True)
         print serializer.data
-        return JSONResponse(serializer.data)
+        return Response(serializer.data)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        serializer = TreeSerializer(data=data)
+        serializer = TreeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             
-            return JSONResponse(serializer.data, status=201)
-        return JSONResponse(serializer.errors, status=400)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@csrf_exempt
-def game_detail(request,pk):
+@api_view(['GET','POST','DELETE'])
+def game_detail(request,pk, format = None):
     """
     Retrieve a new game, and verify answers
 
@@ -45,7 +37,7 @@ def game_detail(request,pk):
     try:
         game = Tree.objects.get(pk = pk)
     except Tree.DoesNotExist:
-        return HttpResponse(status = 404)
+        return Response(status = status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         serializer = TreeSerializer(game);
@@ -60,12 +52,42 @@ def game_detail(request,pk):
             for i in temp['children']:
                 data_to_process.append(i)
         data['answers'] = answers
-        return JSONResponse(data)
-    elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        serializer = TreeSerializer(data = data)
-        serializer.is_valid()
-        return JSONResponse(serializer.errors,status=400)
-    elif request.method == 'DELETE':
-        return JSONResponse(serializer.errors, status=400)
+        return Response(data)
+        
 
+        #check content then check depth
+        
+    elif request.method == 'POST':
+        serializer = TreeSerializer(data = request.data)
+        if serializer.is_valid():
+            if serializer.data['height']==game.height:
+                postRoot = serializer.data['root']
+
+                root = game.root
+                checkList = []
+                answerList =[]
+                answerList.append(root)
+                answerList.extend(root.get_descendants())
+                checkList = makeProcessList(postRoot)
+                for i in range (0,len(checkList)):
+                    if checkList[i]['content'].replace(" ","") =="":
+                        checkList[i]["correct"] = None
+                    elif checkList[i]['content']== answerList[i].content:
+                        checkList[i]['correct']= True
+                    else:
+                        checkList[i]['correct'] = False
+                return Response(serializer.data, status = status.HTTP_200_OK)
+            else:
+                return Response({"tree height is not equal to that of the game tree"},status = status.HTTP_400_BAD_REQUEST)
+
+
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def makeProcessList(node):
+    processedList = [node]
+
+    for i in node['children']:
+        processedList.extend(makeProcessList(i))
+    return processedList
