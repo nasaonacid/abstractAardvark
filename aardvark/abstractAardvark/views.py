@@ -23,9 +23,11 @@ def game_list(request,format = None):
     elif request.method == 'POST':
         serializer = TreeSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if serializer.data['height'] == get_tree_height(serializer.data['root'])
+                if check_new_tree(serializer.data['root']):
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                else return Response(serializer.data, status = status = status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET','POST','DELETE'])
@@ -91,3 +93,38 @@ def makeProcessList(node):
     for i in node['children']:
         processedList.extend(makeProcessList(i))
     return processedList
+
+def get_tree_height(node):
+    if len(node['children']) == 0:
+        return 1
+    else:
+        children_levels  = []
+        for i in range(0,len(node['children'])):
+            children_levels.append(get_tree_height(node['children'][i]))
+        return max(children_levels) + 1
+
+#use this to validate tree creates only. With tree posts validate by doing node on node. 
+def check_new_tree(node, correctLevel = None):
+    
+    valid = True
+    if not correctLevel:
+        correctLevel = 0 
+
+    if not node.hasKey('errors'):
+        node['errors'] ={}
+    if node['level'] != correctLevel:
+        valid = False
+        node['errors']['level'] = "Incorrect level for node"
+    if not (node['content'].replace(" ","")).isalnum():
+        valid = False
+        node['errors']['content'] = "Content is not valid"
+    for i in node['children']:
+        valid = check_new_tree(i,correctLevel+1)
+
+    return valid
+
+def check_tree_post(node, answer_node):
+
+
+
+    

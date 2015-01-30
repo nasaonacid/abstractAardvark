@@ -1,0 +1,1 @@
+{"height":3, "difficulty":"hard", "root":{ "content": , "children":[{ "content":"royalty" , "children":[{ "content":"james" , "children":[]}]},{ "content":"middle_class" , "children":[{ "content":"gavin" , "children":[]},{ "content":"michael" , "children":[]}]},{ "content":"peasant" , "children":[{ "content":"eddie" , "children":[]}]}]}}
