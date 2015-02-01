@@ -23,11 +23,15 @@ def game_list(request,format = None):
     elif request.method == 'POST':
         serializer = TreeSerializer(data=request.data)
         if serializer.is_valid():
-            if serializer.data['height'] == get_tree_height(serializer.data['root'])
+            if serializer.data['height'] == get_tree_height(serializer.data['root']):
                 if check_new_tree(serializer.data['root']):
                     serializer.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
-                else return Response(serializer.data, status = status = status.HTTP_400_BAD_REQUEST)
+                else: 
+                    print "new response"
+                    return Response(serializer.data, status =status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response("tree size doesn't match that specified in post", status =status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET','POST','DELETE'])
@@ -61,26 +65,20 @@ def game_detail(request,pk, format = None):
         
     elif request.method == 'POST':
         serializer = TreeSerializer(data = request.data)
-        if serializer.is_valid():
-            if serializer.data['height']==game.height:
-                postRoot = serializer.data['root']
+        if serializer.is_valid(): 
+            if serializer.data['height'] == get_tree_height(serializer.data['root']):
+                if serializer.data['height']==game.height:
+                    postRoot = serializer.data['root']
 
-                root = game.root
-                checkList = []
-                answerList =[]
-                answerList.append(root)
-                answerList.extend(root.get_descendants())
-                checkList = makeProcessList(postRoot)
-                for i in range (0,len(checkList)):
-                    if checkList[i]['content'].replace(" ","") =="":
-                        checkList[i]["correct"] = None
-                    elif checkList[i]['content']== answerList[i].content:
-                        checkList[i]['correct']= True
+                    root = game.root
+
+                    valid = check_tree_post(postRoot,root)
+                    if valid:
+                        return Response(serializer.data, status = status.HTTP_200_OK)
                     else:
-                        checkList[i]['correct'] = False
-                return Response(serializer.data, status = status.HTTP_200_OK)
+                        return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({"tree height is not equal to that of the game tree"},status = status.HTTP_400_BAD_REQUEST)
+                return Response(["height doesn't match that of the tree and/or internal structure",serializer.data],status = status.HTTP_400_BAD_REQUEST)
 
 
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
@@ -110,7 +108,7 @@ def check_new_tree(node, correctLevel = None):
     if not correctLevel:
         correctLevel = 0 
 
-    if not node.hasKey('errors'):
+    if not node.has_key('errors'):
         node['errors'] ={}
     if node['level'] != correctLevel:
         valid = False
@@ -124,7 +122,25 @@ def check_new_tree(node, correctLevel = None):
     return valid
 
 def check_tree_post(node, answer_node):
+    valid = True
+    node['correct'] = None
+    if node['content'] != answer_node.content :
+        node['correct'] = False
+    elif node['content'] == answer_node.content:
+        node['correct'] = True
+    node['errors'] = {}
+    if node['level'] != answer_node.get_level():
+        valid = False
+        node['errors']['level'] = "Level should be " + str(answer_node.get_level())
+    if len(node['children']) != len(answer_node.get_children()):
+        valid = False
+        node['errors']['children'] = "incorrect number of children for this node "
+    else:
+        children = answer_node.get_children()
+        for i in range(0,len(children)):
+            valid = check_tree_post(node['children'][i], children[i])
+
+    return valid
 
 
-
-    
+#     

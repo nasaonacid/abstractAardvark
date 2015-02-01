@@ -4,7 +4,7 @@ class Node(object):
         self.content = content
         self.parent = parent
         self.children = children if children else []
-        self.depth = 0 if not self.depth else self.parent.depth + 1
+        self.level = 0 if not self.parent else self.parent.level + 1
 
     def add_child(self, node):
         node.parent = self
