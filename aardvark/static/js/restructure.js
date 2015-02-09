@@ -1,44 +1,44 @@
-// /*
-//     Restructured tree generation and validation code. 
-// */
+/*
+    Restructured tree generation and validation code. 
+*/
 
-// //declaration of global variables 
-// var stage;
-// var pageWidth = $("#container").width();
-// var pageHeight = $(window).height();
-// var hPadding;
-// var hierrarchyLayer = new Kinetic.Layer();
-// var arrowLayer = new Kinetic.Layer();
-// var answerLayer = new Kinetic.Layer();
+//declaration of global variables 
+var stage;
+var pageWidth = $("#container").width();
+var pageHeight = $(window).height();
+var hPadding;
+var hierrarchyLayer = new Kinetic.Layer();
+var arrowLayer = new Kinetic.Layer();
+var answerLayer = new Kinetic.Layer();
 
-// var originalWidth = pageWidth;
-// var originalHeight = pageHeight;
+var originalWidth = pageWidth;
+var originalHeight = pageHeight;
 
-// function get_game(){
-//     $.getJSON("http://127.0.0.1:8000/api/games/start/hard/",function(data){
-//         console.log(data);
-//         console.log([].length);
+function get_game(){
+    $.getJSON("http://127.0.0.1:8000/api/games/start/hard/",function(data){
+        console.log(data);
+        console.log([].length);
 
 
-//     });
-// }
+    });
+}
 
-// get_game();
-// //instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
+get_game();
+//instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
 
-// if(pageWidth == null)
-//     pageWidth = 1024;
-// if (pageHeight == null)
-//     pageHeight = 800;
+if(pageWidth == null)
+    pageWidth = 1024;
+if (pageHeight == null)
+    pageHeight = 800;
 
-// console.log(pageHeight);
-// console.log(pageWidth);
+console.log(pageHeight);
+console.log(pageWidth);
 
-// //tree creation 
-// var tree = makeTree();
-// console.log(tree);
-// tree.completion = 0;
-// console.log("completion init" + tree.completion);
+//tree creation 
+var tree = makeTree();
+console.log(tree);
+tree.completion = 0;
+console.log("completion init" + tree.completion);
 
 // initStage();
 /*

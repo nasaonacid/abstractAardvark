@@ -24,6 +24,10 @@ function get_game(){
     });
 }
 
+function updateCopy(){
+    original_tree = JSON.parse(JSON.stringify(current_tree));
+}
+
 function initStage(){
     stage = new Kinetic.Stage({
         draggable: false,
@@ -33,9 +37,10 @@ function initStage(){
     });
     console.log(current_tree);
     console.log(JSON.stringify(current_tree));
-    original_tree = JSON.parse(JSON.stringify(current_tree))
     createHierrarchy(current_tree);
+    updateCopy();
     drawHierrarchy(current_tree.root);
+
     // // console.log(interimSolution);
     // drawConnections(tree);
     drawAnswers(current_tree.answers);
@@ -166,7 +171,104 @@ function drawAnswers(answers){
     wpad= pageWidth/(answers.length)
     //create a grouping of rectangle, text and a line to make a uml box answer
     for (i = 0; i<answers.length;i++){
-        node = {'x':x, 'y':y};
+        var group = drawAnswerGroup(answers[i],x,y,wpad);
+
+
+        // on mouse over a box highlight the box
+        group.on('mouseover touchstart', function(evt) {
+
+            evt.target.strokeWidth(2);
+            hierrarchyLayer.draw();
+            document.body.style.cursor = 'pointer';
+        });
+        // when the mouse leaves the box, unhighlight the box
+        group.on('mouseout touchend', function(evt) {
+            evt.target.strokeWidth(1);
+            hierrarchyLayer.draw();
+            document.body.style.cursor = 'default';
+        });
+
+            // handler for drag event.
+        group.on('dragstart', function(evt) {
+            this.moveToTop();
+            var closestMatch = checkDrop(evt.target);
+            if(closestMatch != null){
+                if(tree.contents[closestMatch.i][closestMatch.j].correctMap!=true)
+                    tree.contents[closestMatch.i][closestMatch.j].matched = false;
+            }
+            stage.draw();
+        });
+
+        //hnaadler for drag drop event
+        group.on('dragend', function(evt) {
+            var matched = checkMatch(evt.target);
+
+            console.log("what up dawg "+ matched);
+
+            if(matched != null){
+                evt.target.setAttr('x',matched.x);
+                evt.target.setAttr('y',matched.y);
+                console.log(current_tree);
+                $.ajax({
+                    type: "POST",
+                    url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
+                    data: JSON.stringify(current_tree),
+                    success:function(data){
+                        console.log(data);
+                    },
+                    error: function(data,status,errorThrown){
+                        console.log(data.responseJSON);
+                        console.log(status);
+                        console.log(errorThrown);
+                    },
+                    datatype: "json"
+                });
+            }
+
+            // if(closestMatch != null){
+            //     closestMatch.x = tree.contents[closestMatch.i][closestMatch.j].x;
+            //     closestMatch.y = tree.contents[closestMatch.i][closestMatch.j].y;
+
+                
+            //     console.log(tree.contents[closestMatch.i][closestMatch.j].matched);
+            //     if(tree.contents[closestMatch.i][closestMatch.j].matched == false){ 
+            //         console.log("ITS A MATCH");
+
+            //         tree.contents[closestMatch.i][closestMatch.j].matched = true;
+            //         if (evt.target.find('Rect')[0].getAttr('id') == tree.contents[closestMatch.i][closestMatch.j].content ){
+                        
+            //             tree.contents[closestMatch.i][closestMatch.j].correctMap = true;
+            //             tree.completion++;
+            //             console.log("number to completion = "+ (tree.totalSize - tree.completion));
+            //             evt.target.find('Rect')[0].setAttr('stroke','green');
+            //             stage.draw();
+
+
+            //             // disable drag and drop
+            //             setTimeout(function() {
+            //               evt.target.setDraggable(false);
+            //             }, 50);
+            //         }
+            //         else{
+            //             evt.target.find('Rect')[0].setAttr('stroke','red');
+            //             stage.draw();
+            //         }
+            //     }
+            // }
+        });
+
+        answerLayer.add(group);
+        x += current_tree.boxWidth;
+    }
+}
+
+/*
+ below counts the nodes at each level and returns an array where each
+ index is a level in the tree with the value being the amount of nodes
+ this is used in the calculation of width padding at each level
+*/
+function drawAnswerGroup( answer, x , y, wpad){
+        node = {'x':0, 'y':0};
         var rect = drawNode(node);
         // console.log(rect);
         var text = new Kinetic.Text({
@@ -175,7 +277,7 @@ function drawAnswers(answers){
             y: 3,
             height: current_tree.boxHeight,
             width: current_tree.boxWidth,
-            text: answers[i],
+            text: answer,
             fontSize: 15,
             fontFamily: 'Calibri',
             fill: 'black'
@@ -209,79 +311,8 @@ function drawAnswers(answers){
         group.add(rect);
         group.add(text);
         group.add(line);
-
-        //on mouse over a box highlight the box
-        // group.on('mouseover touchstart', function(evt) {
-        //   evt.target.strokeWidth(2);
-        //   answerLayer.draw();
-        //   document.body.style.cursor = 'pointer';
-        // });
-        // // when the mouse leaves the box, unhighlight the box
-        // group.on('mouseout touchend', function(evt) {
-        //   evt.target.strokeWidth(1);
-        //   hierrarchyLayer.draw();
-        //   document.body.style.cursor = 'default';
-        // });
-
-            //handler for drag event.
-        // group.on('dragstart', function(evt) {
-        //     this.moveToTop();
-        //     var closestMatch = checkDrop(evt.target);
-        //     if(closestMatch != null){
-        //         if(tree.contents[closestMatch.i][closestMatch.j].correctMap!=true)
-        //             tree.contents[closestMatch.i][closestMatch.j].matched = false;
-        //     }
-        //     stage.draw();
-        // });
-
-        // //hnaadler for drag drop event
-        // group.on('dragend', function(evt) {
-        //     var closestMatch = checkDrop(evt.target);
-
-        //     console.log("what up dawg "+ closestMatch);
-        //     if(closestMatch != null){
-        //         closestMatch.x = tree.contents[closestMatch.i][closestMatch.j].x;
-        //         closestMatch.y = tree.contents[closestMatch.i][closestMatch.j].y;
-
-                
-        //         console.log(tree.contents[closestMatch.i][closestMatch.j].matched);
-        //         if(tree.contents[closestMatch.i][closestMatch.j].matched == false){ 
-        //             console.log("ITS A MATCH");
-        //             evt.target.setAttr('x',closestMatch.x);
-        //             evt.target.setAttr('y',closestMatch.y);
-        //             tree.contents[closestMatch.i][closestMatch.j].matched = true;
-        //             if (evt.target.find('Rect')[0].getAttr('id') == tree.contents[closestMatch.i][closestMatch.j].content ){
-                        
-        //                 tree.contents[closestMatch.i][closestMatch.j].correctMap = true;
-        //                 tree.completion++;
-        //                 console.log("number to completion = "+ (tree.totalSize - tree.completion));
-        //                 evt.target.find('Rect')[0].setAttr('stroke','green');
-        //                 stage.draw();
-
-
-        //                 // disable drag and drop
-        //                 setTimeout(function() {
-        //                   evt.target.setDraggable(false);
-        //                 }, 50);
-        //             }
-        //             else{
-        //                 evt.target.find('Rect')[0].setAttr('stroke','red');
-        //                 stage.draw();
-        //             }
-        //         }
-        //     }
-        // });
-
-        answerLayer.add(group);
-        x += current_tree.boxWidth;
-    }
+        return group;
 }
-
-/*
- below counts the nodes at each level and returns an array where each
- index is a level in the tree with the value being the amount of nodes
- this is used in the calculation of width padding at each level
-*/
 function levelCount(node){
     var level_dict = [];
     var process_list = [];
@@ -297,9 +328,30 @@ function levelCount(node){
         };
     }
     return level_dict;
+}
 
+function checkMatch(item){
+    var x = item.getAttr('x');
+    var y = item.getAttr('y');
+    var node = current_tree.root;
+    var process_list = [];
+    process_list.push(node);
+    while(process_list.length>0){
+        current = process_list.pop();
+        // console.log("x : "+current.x + " == "+ x);
+        // console.log("y : "+current.y + " == "+ y);
+        if(Math.abs(x - current.x) <= 50 && Math.abs(y-current.y)<=50){
+            updateCopy();
+            current_tree.content = item.find('Text')[0].getAttr('text');
+            return {'x':current.x, 'y':current.y};
+        }
+        for(i = 0; i<current.children.length; i++){
+            process_list.push(current.children[i]);
+        }
+    }
+    return null; 
 
-
+    
 }
 //returns the width padding for each level 
 function wPadding(level_width,node_width){

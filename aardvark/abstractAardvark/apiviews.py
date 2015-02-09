@@ -77,17 +77,19 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         while data_to_process:
             temp = data_to_process.pop()
             answers.append(temp['content'])
-            temp['content'] = ''
+            temp['content'] = " "
             for i in temp['children']:
                 data_to_process.append(i)
         data['answers'] = answers
         data['max_width'] = game.max_width
+        data['pk'] = game.pk
         return Response(data)
         
 
         #check content then check depth
         
     elif request.method == 'POST':
+        print "hello"
         try:
             game = Tree.objects.get(pk = pk)
         except Tree.DoesNotExist:
