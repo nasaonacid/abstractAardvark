@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html>
+	
+	<head>
+
+	</head>
+	<body>
+		<div id = "container"  class = "row"></div>
+		
+		
+	</body>
+
+	<script type="text/javascript" src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+	<script type="text/javascript" src="{% static 'js/kinetic-v5.1.0.min.js' %}"></script>
+	<script type="text/javascript" src="{% static 'js/tree.js' %}"></script>
+	<script type="text/javascript" src="{% static 'js/restructure.js' %}"></script>
+	<script type="text/javascript" src = "{% static 'js/game.js'%}"></script>
+	<script type="text/javascript">
+	 	$(window).resize(function(){
+	 		adjustments();
+	 	});
+	</script>
+
+</html>

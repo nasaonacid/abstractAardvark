@@ -7,7 +7,7 @@ django.setup()
 from nltk.corpus import wordnet as wn
 from abstractAardvark.models import Tree
 from abstractAardvark.models import Node as MNode
-
+from abstractAardvark.serializers import calc_max_width
 class Node(object):
  
     def __init__(self, content=None, parent=None, children=None):
@@ -65,11 +65,11 @@ def process_tree(node):
         iteration+=1
         print iteration
         current = process_list.pop()
-        if len(current.children)>0:
+        if len(current.children)>1:
             print current.content
             root, height= process_node(current)
             height += 1 ##correction for 0 based level
-            
+            max_width = calc_max_width(root)
             difficulty = 'easy'
             total = len(root.get_descendants())
 
@@ -77,7 +77,7 @@ def process_tree(node):
                 difficulty = 'hard'
             elif total>4 and total<=13:
                 difficulty = 'medium'
-            t = Tree.objects.create(height = height, difficulty = difficulty, root = root)
+            t = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width)
             t.save()
             for i in current.children:
                 process_list.append(i)
@@ -111,6 +111,7 @@ def populate():
     x = create_wordnet_tree()
     # print x
     process_tree(x)
+
 if __name__ == '__main__':
     print "Starting abstractAardvark population script..."
     populate()

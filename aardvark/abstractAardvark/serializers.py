@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from abstractAardvark.models import Node, Tree
+from rest_framework.pagination import PaginationSerializer
 
 
 class NodeSerializer(serializers.ModelSerializer):
@@ -38,6 +39,28 @@ class TreeSerializer(serializers.ModelSerializer):
         root_data = validated_data.pop('root')
         nSerial = NodeSerializer(data = root_data)
         root = nSerial.save() if nSerial.is_valid() else None
-        tree = Tree.objects.create(height = height, difficulty = difficulty, root = root)
+        max_width = calc_max_width(root)
+
+        tree = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width)
         return tree
 
+def calc_max_width(node):
+    width_list = {}
+    process_list = []
+    process_list.append(node)
+    while process_list:
+
+        current = process_list.pop()
+        if not width_list.has_key(current.level):
+            width_list[current.level]=0
+        width_list[current.level] +=1
+        for i in current.get_children():
+            process_list.append(i)
+
+    return max(width_list.values())
+
+
+class PaginatedTreeSerializer(PaginationSerializer):
+
+    class Meta:
+        object_serializer_class = TreeSerializer

@@ -1,11 +1,11 @@
 from django.shortcuts import render
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from abstractAardvark.models import Tree
-from abstractAardvark.serializers import NodeSerializer, TreeSerializer
+from abstractAardvark.serializers import NodeSerializer, TreeSerializer, PaginatedTreeSerializer
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from random import randint
 
 
 
@@ -16,8 +16,17 @@ def game_list(request,format = None):
     """
     if request.method == 'GET':
         trees = Tree.objects.all()
-        serializer = TreeSerializer(trees, many=True)
-        print serializer.data
+        paginator = Paginator(trees,10)
+        page = request.QUERY_PARAMS.get('page')
+        try:
+            trees = paginator.page(page)
+        except PageNotAnInteger:
+            trees = paginator.page(1)
+        except EmptyPage:
+            trees = paginator.page(paginator.num_pages)
+
+        serializer_context = {'request': request}
+        serializer = PaginatedTreeSerializer(trees, context = serializer_context)
         return Response(serializer.data)
 
     elif request.method == 'POST':
@@ -35,17 +44,31 @@ def game_list(request,format = None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET','POST','DELETE'])
-def game_detail(request,pk, format = None):
+def game_detail(request,pk = None,diff = 'easy', format = None):
     """
     Retrieve a new game, and verify answers
 
     """
-    try:
-        game = Tree.objects.get(pk = pk)
-    except Tree.DoesNotExist:
-        return Response(status = status.HTTP_404_NOT_FOUND)
+    choices = ['easy','medium','hard']
 
     if request.method == 'GET':
+        if pk == None:
+            print diff
+            if diff == None:
+                diff = 'easy'
+            if diff in choices:
+                games = Tree.objects.filter(difficulty = diff)
+                if games:
+                    game= games[randint(0,len(games)-1)]
+                else:
+                    return Response({"error":"No trees of this kind exist"}, status = status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({"error":"Difficulty doesn't exist"},status = status.HTTP_400_BAD_REQUEST)
+        else:
+            game = Tree.objects.get(pk = pk)
+            if not game:
+                return Response({"error":str(pk)+" doesn't exist"},status = status.HTTP_400_BAD_REQUEST)
+        
         serializer = TreeSerializer(game);
         data = serializer.data
         answers = []
@@ -58,12 +81,17 @@ def game_detail(request,pk, format = None):
             for i in temp['children']:
                 data_to_process.append(i)
         data['answers'] = answers
+        data['max_width'] = game.max_width
         return Response(data)
         
 
         #check content then check depth
         
     elif request.method == 'POST':
+        try:
+            game = Tree.objects.get(pk = pk)
+        except Tree.DoesNotExist:
+            return Response(status = status.HTTP_404_NOT_FOUND)
         serializer = TreeSerializer(data = request.data)
         if serializer.is_valid(): 
             if serializer.data['height'] == get_tree_height(serializer.data['root']):
