@@ -6,6 +6,7 @@ from abstractAardvark.models import Tree
 from abstractAardvark.serializers import NodeSerializer, TreeSerializer, PaginatedTreeSerializer
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from random import randint
+import json
 
 
 
@@ -89,12 +90,17 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         #check content then check depth
         
     elif request.method == 'POST':
-        print "hello"
+        # print type(request.data)
         try:
             game = Tree.objects.get(pk = pk)
         except Tree.DoesNotExist:
             return Response(status = status.HTTP_404_NOT_FOUND)
-        serializer = TreeSerializer(data = request.data)
+        data = request.data
+        if(data.has_key('json')):
+            data = json.loads(data['json'])
+            print type(data)
+            print data
+        serializer = TreeSerializer(data = data)
         if serializer.is_valid(): 
             if serializer.data['height'] == get_tree_height(serializer.data['root']):
                 if serializer.data['height']==game.height:

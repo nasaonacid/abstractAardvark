@@ -208,13 +208,13 @@ function drawAnswers(answers){
             if(matched != null){
                 evt.target.setAttr('x',matched.x);
                 evt.target.setAttr('y',matched.y);
-                console.log(current_tree);
                 $.ajax({
                     type: "POST",
                     url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
-                    data: JSON.stringify(current_tree),
+                    data: "json="+JSON.stringify(current_tree),
                     success:function(data){
                         console.log(data);
+                        console.log(data.root.error);
                     },
                     error: function(data,status,errorThrown){
                         console.log(data.responseJSON);
