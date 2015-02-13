@@ -35,21 +35,15 @@ function initStage(){
         width: pageWidth,
         container: 'container' 
     });
-    console.log(current_tree);
-    console.log(JSON.stringify(current_tree));
+
     createHierrarchy(current_tree);
     updateCopy();
-    drawHierrarchy(current_tree.root);
 
-    // // console.log(interimSolution);
-    // drawConnections(tree);
+    drawHierrarchy(current_tree.root);
     drawAnswers(current_tree.answers);
-    // stage.add(arrowLayer);
-    // console.log(stage);
+
     stage.add(hierrarchyLayer);
     stage.add(answerLayer);
-    // console.log(hierrarchyLayer.find('#object'));
-    // console.log("Finished");
 }
 
 function createHierrarchy(tree){
@@ -61,7 +55,6 @@ function createHierrarchy(tree){
         tree.boxHeight = boxHeight;
         tree.boxWidth = boxWidth;
         var y = hPadding;
-        console.log(tree.root);
         var level_dict = levelCount(tree.root);
         var level_references = [];
         //level references will keep track of the current position of x and y when iterating through the process list to ensure all items are processed
@@ -83,7 +76,6 @@ function createHierrarchy(tree){
                 process_list.push(current.children[i]);
             } 
         }
-        console.log(tree)
     }
     else
         console.log("empty tree error");
@@ -168,6 +160,7 @@ function drawAnswers(answers){
     //set the x and y coordinates so that we start at the lowest area. 
     var x = 0
     var y = hPadding*current_tree.height*2;
+
     wpad= pageWidth/(answers.length)
     //create a grouping of rectangle, text and a line to make a uml box answer
     for (i = 0; i<answers.length;i++){
@@ -191,10 +184,15 @@ function drawAnswers(answers){
             // handler for drag event.
         group.on('dragstart', function(evt) {
             this.moveToTop();
-            var closestMatch = checkDrop(evt.target);
-            if(closestMatch != null){
-                if(tree.contents[closestMatch.i][closestMatch.j].correctMap!=true)
-                    tree.contents[closestMatch.i][closestMatch.j].matched = false;
+            clearDrop(evt);
+            // console.log("------------------drag start--------------------")
+            // console.log(evt.target)
+            if(evt.target.currentMatch!= null){
+                x = evt.target.currentMatch.correct;
+                evt.target.currentMatch.correct = null;
+                evt.target.currentMatch.content = " ";
+                evt.target.currentMatch = null;
+
             }
             stage.draw();
         });
@@ -203,18 +201,27 @@ function drawAnswers(answers){
         group.on('dragend', function(evt) {
             var matched = checkMatch(evt.target);
 
-            console.log("what up dawg "+ matched);
-
             if(matched != null){
                 evt.target.setAttr('x',matched.x);
                 evt.target.setAttr('y',matched.y);
+                updateCopy();
                 $.ajax({
                     type: "POST",
                     url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
                     data: "json="+JSON.stringify(current_tree),
                     success:function(data){
                         console.log(data);
-                        console.log(data.root.error);
+                        var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
+                        if(status == true){
+                            validDrop(evt);
+                            setTimeout(function() {
+                                  evt.target.setDraggable(false);
+                            }, 50);
+                        }
+                        else{
+                            invalidDrop(evt);
+                        }
+                        stage.draw();
                     },
                     error: function(data,status,errorThrown){
                         console.log(data.responseJSON);
@@ -225,43 +232,58 @@ function drawAnswers(answers){
                 });
             }
 
-            // if(closestMatch != null){
-            //     closestMatch.x = tree.contents[closestMatch.i][closestMatch.j].x;
-            //     closestMatch.y = tree.contents[closestMatch.i][closestMatch.j].y;
 
-                
-            //     console.log(tree.contents[closestMatch.i][closestMatch.j].matched);
-            //     if(tree.contents[closestMatch.i][closestMatch.j].matched == false){ 
-            //         console.log("ITS A MATCH");
-
-            //         tree.contents[closestMatch.i][closestMatch.j].matched = true;
-            //         if (evt.target.find('Rect')[0].getAttr('id') == tree.contents[closestMatch.i][closestMatch.j].content ){
-                        
-            //             tree.contents[closestMatch.i][closestMatch.j].correctMap = true;
-            //             tree.completion++;
-            //             console.log("number to completion = "+ (tree.totalSize - tree.completion));
-            //             evt.target.find('Rect')[0].setAttr('stroke','green');
-            //             stage.draw();
-
-
-            //             // disable drag and drop
-            //             setTimeout(function() {
-            //               evt.target.setDraggable(false);
-            //             }, 50);
-            //         }
-            //         else{
-            //             evt.target.find('Rect')[0].setAttr('stroke','red');
-            //             stage.draw();
-            //         }
-            //     }
-            // }
         });
 
         answerLayer.add(group);
-        x += current_tree.boxWidth;
+        x += wpad;
     }
 }
 
+function validDrop(evt){
+    evt.target.find('Rect')[0].setAttr('stroke','green');
+    evt.target.find('Rect')[0].setAttr('strokeWidth',3);
+}
+
+function invalidDrop(evt){
+    evt.target.find('Rect')[0].setAttr('stroke','red');
+    evt.target.find('Rect')[0].setAttr('strokeWidth',3);
+}
+
+function clearDrop(evt){
+    evt.target.find('Rect')[0].setAttr('stroke','black');
+    evt.target.find('Rect')[0].setAttr('strokeWidth',1);
+}
+
+/*
+    checks a sucessful post to see if the posted answer was correct or not. 
+    Currently only valid for posts of data to correct tree.
+*/
+function processPostSucess(data, content){
+    data_list = [];
+    current_list = [];
+    data_list.push(data.root);
+    current_list.push(current_tree.root)
+    while (data_list.length >0){
+        currentNode = current_list.pop();
+        dataNode = data_list.pop();
+        if(dataNode.content == content){
+            console.log(dataNode.correct);
+            if (dataNode.correct == true){
+                currentNode.correct = true; 
+                return true;
+            }
+            else{
+                currentNode.correct = false;
+                return false
+            }
+        }
+        for( i = 0; i<dataNode.children.length; i++){
+            data_list.push(dataNode.children[i]);
+            current_list.push(currentNode.children[i]);
+        }
+    }
+}
 /*
  below counts the nodes at each level and returns an array where each
  index is a level in the tree with the value being the amount of nodes
@@ -311,6 +333,7 @@ function drawAnswerGroup( answer, x , y, wpad){
         group.add(rect);
         group.add(text);
         group.add(line);
+        group.currentMatch = null;
         return group;
 }
 function levelCount(node){
@@ -331,19 +354,33 @@ function levelCount(node){
 }
 
 function checkMatch(item){
+    // console.log("--------------------------------------")
     var x = item.getAttr('x');
     var y = item.getAttr('y');
     var node = current_tree.root;
     var process_list = [];
     process_list.push(node);
+    // console.log(current_tree);
+    // console.log(item);
     while(process_list.length>0){
         current = process_list.pop();
         // console.log("x : "+current.x + " == "+ x);
         // console.log("y : "+current.y + " == "+ y);
+
         if(Math.abs(x - current.x) <= 50 && Math.abs(y-current.y)<=50){
-            updateCopy();
-            current_tree.content = item.find('Text')[0].getAttr('text');
-            return {'x':current.x, 'y':current.y};
+
+            if( typeof(current.correct)=="undefined" | current.correct===null){
+                console.log("Match");
+                console.log(current);
+                console.log(current.correct)
+                console.log(item);
+
+                updateCopy();
+                item.currentMatch = current;
+
+                current.content = item.find('Text')[0].getAttr('text');
+                return {'x':current.x, 'y':current.y};
+            }
         }
         for(i = 0; i<current.children.length; i++){
             process_list.push(current.children[i]);
@@ -356,4 +393,26 @@ function checkMatch(item){
 //returns the width padding for each level 
 function wPadding(level_width,node_width){
     return (pageWidth-(node_width*level_width)) / (level_width+1);
+}
+
+
+function adjustments(){
+    console.log("DO YOU WANNA BUILD A SNOWMAN?");
+    pageWidth = $(window).width();
+    pageHeight = $(window).height();
+    var xRatio = pageWidth/originalWidth;
+    var yRatio = pageHeight/originalHeight;
+    console.log(originalHeight);
+    console.log(xRatio);
+    console.log(yRatio);
+    
+    console.log(pageHeight);
+
+    stage.setAttr('width',pageWidth);
+    stage.setAttr('height',pageHeight);
+    
+    stage.setScaleX(xRatio);
+    stage.setScaleY(yRatio);
+    stage.draw();
+
 }

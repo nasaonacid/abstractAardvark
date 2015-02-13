@@ -38,7 +38,7 @@ def game_list(request,format = None):
                     serializer.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
                 else: 
-                    print "new response"
+
                     return Response(serializer.data, status =status.HTTP_400_BAD_REQUEST)
             else:
                 return Response("tree size doesn't match that specified in post", status =status.HTTP_400_BAD_REQUEST)
@@ -54,7 +54,6 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
 
     if request.method == 'GET':
         if pk == None:
-            print diff
             if diff == None:
                 diff = 'easy'
             if diff in choices:
@@ -90,7 +89,7 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         #check content then check depth
         
     elif request.method == 'POST':
-        # print type(request.data)
+
         try:
             game = Tree.objects.get(pk = pk)
         except Tree.DoesNotExist:
@@ -98,8 +97,6 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         data = request.data
         if(data.has_key('json')):
             data = json.loads(data['json'])
-            print type(data)
-            print data
         serializer = TreeSerializer(data = data)
         if serializer.is_valid(): 
             if serializer.data['height'] == get_tree_height(serializer.data['root']):
