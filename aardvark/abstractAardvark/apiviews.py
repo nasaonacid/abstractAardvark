@@ -15,6 +15,14 @@ def game_list(request,format = None):
     """
     List all code snippets, or create a new snippet.
     """
+    print request.session.get_expiry_age()
+    if request.session.get('test') == None:
+        print("wompa")
+        request.session['test'] ='wwwww2'
+        request.session.set_expiry(100)
+    if request.session.get_expiry_age() <= 0:
+        print session.get('test')
+        request.session.clear_expired()
     if request.method == 'GET':
         trees = Tree.objects.all()
         paginator = Paginator(trees,10)
@@ -67,7 +75,7 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         else:
             game = Tree.objects.get(pk = pk)
             if not game:
-                return Response({"error":str(pk)+" doesn't exist"},status = status.HTTP_400_BAD_REQUEST)
+                return Response({"error: "+ str(pk)+" doesn't exist"},status = status.HTTP_400_BAD_REQUEST)
         
         serializer = TreeSerializer(game);
         data = serializer.data

@@ -1,9 +1,9 @@
 var stage;
 var pageWidth = $("#container").width();
-var pageHeight = $(window).height();
+var pageHeight = $(window).height()-100;
 var hPadding;
-var hierrarchyLayer = new Kinetic.Layer();
-var answerLayer = new Kinetic.Layer();
+var hierrarchyLayer;
+var answerLayer;
 
 var originalWidth = pageWidth;
 var originalHeight = pageHeight;
@@ -16,12 +16,16 @@ if(pageWidth == null)
 if (pageHeight == null)
     pageHeight = 800;
 
-get_game();
-function get_game(){
-    $.getJSON("http://127.0.0.1:8000/api/games/start/hard/",function(data){
+get_game('easy');
+function get_game(difficulty){
+
+    $.getJSON("http://127.0.0.1:8000/api/games/start/"+difficulty+"/")
+    .success(function(data){
         current_tree = data;
         initStage();
-    });
+    })
+    .error()
+    .complete();
 }
 
 function updateCopy(){
@@ -35,7 +39,8 @@ function initStage(){
         width: pageWidth,
         container: 'container' 
     });
-
+    hierrarchyLayer = new Kinetic.Layer();
+    answerLayer = new Kinetic.Layer();
     createHierrarchy(current_tree);
     updateCopy();
 
@@ -87,16 +92,48 @@ function drawHierrarchy(node){
     process_list.push(node);
     while(process_list.length>0){
         current = process_list.pop();
-        hierrarchyLayer.add(drawNode(current));
+        var group = new Kinetic.Group({
+            draggable: false,
+            x: current.x,
+            y: current.y,
+        });
 
+        group.add(drawNode({'x':0, 'y':0}));
+    
         for (i = 0; i<current.children.length; i++){
-            hierrarchyLayer.add(drawArrow(current,current.children[i]));
+            group.add(drawArrow(current,current.children[i]));
             process_list.push(current.children[i]);
         }
+        group.on('mouseover touchstart', function(evt) {
+            highlight(evt, 'red');
+        });
+        // when the mouse leaves the box, unhighlight the box
+        group.on('mouseout touchend', function(evt) {
+            highlight(evt, 'black');
+        });
+        hierrarchyLayer.add(group)
     }
+
 
 }
 
+function highlight(evt, colour){
+    parent = evt.target.parent;
+    parent.moveToTop();
+    for (var i =parent.children.length - 1; i >= 0; i--) {
+
+        if (parent.children[i].nodeType == "Group"){
+            for (var j = parent.children[i].children.length - 1; j >= 0; j--) {
+                parent.children[i].children[j].setAttr('stroke',colour);
+            };
+
+        }
+        else{
+            parent.children[i].setAttr('stroke',colour);
+        }
+    }
+    hierrarchyLayer.draw();
+}
 
 //draws the slot for each box
 
@@ -126,31 +163,22 @@ function drawArrow(node, child){
     var layer = new Kinetic.Layer();
     var arrowHead = new Kinetic.RegularPolygon({
         sides: 3,
-        x: node.x + boxWidth/2,
-        y: node.y + boxHeight + 7,
+        x: 0 + boxWidth/2,
+        y: 0 + boxHeight + 7,
         radius: 7,
         fill: 'white',
         stroke: 'black',
         strokeWidth: 1
     });
     var arrowLine = new Kinetic.Line({
-        points: [arrowHead.getAttr('x'),arrowHead.getAttr('y'),arrowHead.getAttr('x'),arrowHead.getAttr('y') + boxHeight/2, child.x + boxWidth/2, arrowHead.getAttr('y') + boxHeight/2, child.x + boxWidth/2, child.y],
+        points: [arrowHead.getAttr('x'),arrowHead.getAttr('y'),arrowHead.getAttr('x'),arrowHead.getAttr('y') + boxHeight/2, child.x-node.x + boxWidth/2, arrowHead.getAttr('y') + boxHeight/2, child.x-node.x + boxWidth/2, child.y-node.y],
         stroke: 'black'
     });
     var group = new Kinetic.Group();
 
     group.add(arrowLine);
     group.add(arrowHead);
-    group.on('mouseover touchstart', function(evt) {
-        this.moveToTop();
-        evt.target.stroke('red');
-        hierrarchyLayer.draw();
-    });
-    // when the mouse leaves the box, unhighlight the box
-    group.on('mouseout touchend', function(evt) {
-        evt.target.stroke('black');
-        hierrarchyLayer.draw();
-    });
+
 
     return group;
 }
@@ -158,10 +186,11 @@ function drawArrow(node, child){
 function drawAnswers(answers){
 
     //set the x and y coordinates so that we start at the lowest area. 
-    var x = 0
+
     var y = hPadding*current_tree.height*2;
 
-    wpad= pageWidth/(answers.length)
+    wpad= pageWidth/(answers.length+1)
+    var x = wpad/2;
     //create a grouping of rectangle, text and a line to make a uml box answer
     for (i = 0; i<answers.length;i++){
         var group = drawAnswerGroup(answers[i],x,y,wpad);
@@ -169,15 +198,17 @@ function drawAnswers(answers){
 
         // on mouse over a box highlight the box
         group.on('mouseover touchstart', function(evt) {
-
-            evt.target.strokeWidth(2);
-            hierrarchyLayer.draw();
+            this.moveToTop();
+            rect = evt.target.parent.children[0];
+            rect.setAttr('strokeWidth',2.5);
+            answerLayer.draw();
             document.body.style.cursor = 'pointer';
         });
         // when the mouse leaves the box, unhighlight the box
         group.on('mouseout touchend', function(evt) {
-            evt.target.strokeWidth(1);
-            hierrarchyLayer.draw();
+            rect = evt.target.parent.children[0];
+            rect.setAttr('strokeWidth',1);
+            answerLayer.draw();
             document.body.style.cursor = 'default';
         });
 
@@ -208,6 +239,7 @@ function drawAnswers(answers){
                 $.ajax({
                     type: "POST",
                     url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
+                    // url: "http://127.0.0.1:8000/api/games/start/"+20000000+"/",
                     data: "json="+JSON.stringify(current_tree),
                     success:function(data){
                         console.log(data);
@@ -223,10 +255,14 @@ function drawAnswers(answers){
                         }
                         stage.draw();
                     },
-                    error: function(data,status,errorThrown){
-                        console.log(data.responseJSON);
+                    error: function(jqXHR, status , errorThrown){
+                        console.log(jqXHR.status);
                         console.log(status);
                         console.log(errorThrown);
+                        code = jqXHR.status
+                        if (code == 404){
+                            alert("404 error thrown")
+                        } 
                     },
                     datatype: "json"
                 });
