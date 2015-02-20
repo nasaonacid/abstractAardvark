@@ -105,11 +105,11 @@ function drawHierrarchy(node){
             process_list.push(current.children[i]);
         }
         group.on('mouseover touchstart', function(evt) {
-            highlight(evt, 'red');
+            highlight(evt, 'red',3);
         });
         // when the mouse leaves the box, unhighlight the box
         group.on('mouseout touchend', function(evt) {
-            highlight(evt, 'black');
+            highlight(evt, 'black',1);
         });
         hierrarchyLayer.add(group)
     }
@@ -117,7 +117,7 @@ function drawHierrarchy(node){
 
 }
 
-function highlight(evt, colour){
+function highlight(evt, colour, width){
     parent = evt.target.parent;
     parent.moveToTop();
     for (var i =parent.children.length - 1; i >= 0; i--) {
@@ -125,11 +125,13 @@ function highlight(evt, colour){
         if (parent.children[i].nodeType == "Group"){
             for (var j = parent.children[i].children.length - 1; j >= 0; j--) {
                 parent.children[i].children[j].setAttr('stroke',colour);
+                parent.children[i].children[j].setAttr('strokeWidth', width);
             };
 
         }
         else{
             parent.children[i].setAttr('stroke',colour);
+            parent.children[i].setAttr('strokeWidth', width);
         }
     }
     hierrarchyLayer.draw();
@@ -216,8 +218,7 @@ function drawAnswers(answers){
         group.on('dragstart', function(evt) {
             this.moveToTop();
             clearDrop(evt);
-            // console.log("------------------drag start--------------------")
-            // console.log(evt.target)
+
             if(evt.target.currentMatch!= null){
                 x = evt.target.currentMatch.correct;
                 evt.target.currentMatch.correct = null;
@@ -242,7 +243,8 @@ function drawAnswers(answers){
                     // url: "http://127.0.0.1:8000/api/games/start/"+20000000+"/",
                     data: "json="+JSON.stringify(current_tree),
                     success:function(data){
-                        console.log(data);
+                        console.log("under here");
+                        console.log(data.correct);
                         var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
                         if(status == true){
                             validDrop(evt);
@@ -261,7 +263,8 @@ function drawAnswers(answers){
                         console.log(errorThrown);
                         code = jqXHR.status
                         if (code == 404){
-                            alert("404 error thrown")
+                            console.log("done");
+                            $('#lossAlert').addClass('in');
                         } 
                     },
                     datatype: "json"
@@ -304,7 +307,7 @@ function processPostSucess(data, content){
         currentNode = current_list.pop();
         dataNode = data_list.pop();
         if(dataNode.content == content){
-            console.log(dataNode.correct);
+            // console.log(dataNode.correct);
             if (dataNode.correct == true){
                 currentNode.correct = true; 
                 return true;
@@ -393,6 +396,8 @@ function checkMatch(item){
     // console.log("--------------------------------------")
     var x = item.getAttr('x');
     var y = item.getAttr('y');
+    var dropX = current_tree.boxWidth / 2
+    var dropY = current_tree.boxHeight / 2
     var node = current_tree.root;
     var process_list = [];
     process_list.push(node);
@@ -403,13 +408,13 @@ function checkMatch(item){
         // console.log("x : "+current.x + " == "+ x);
         // console.log("y : "+current.y + " == "+ y);
 
-        if(Math.abs(x - current.x) <= 50 && Math.abs(y-current.y)<=50){
+        if(Math.abs(x - current.x) <= dropX && Math.abs(y-current.y)<= dropY){
 
             if( typeof(current.correct)=="undefined" | current.correct===null){
-                console.log("Match");
-                console.log(current);
-                console.log(current.correct)
-                console.log(item);
+                // console.log("Match");
+                // console.log(current);
+                // console.log(current.correct)
+                // console.log(item);
 
                 updateCopy();
                 item.currentMatch = current;
@@ -433,16 +438,10 @@ function wPadding(level_width,node_width){
 
 
 function adjustments(){
-    console.log("DO YOU WANNA BUILD A SNOWMAN?");
-    pageWidth = $(window).width();
-    pageHeight = $(window).height();
+    pageWidth = $('#container').width();
+    pageHeight = $(window).height()-100;
     var xRatio = pageWidth/originalWidth;
     var yRatio = pageHeight/originalHeight;
-    console.log(originalHeight);
-    console.log(xRatio);
-    console.log(yRatio);
-    
-    console.log(pageHeight);
 
     stage.setAttr('width',pageWidth);
     stage.setAttr('height',pageHeight);

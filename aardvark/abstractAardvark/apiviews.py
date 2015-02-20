@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from abstractAardvark.models import Tree
 from abstractAardvark.serializers import NodeSerializer, TreeSerializer, PaginatedTreeSerializer
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from random import randint
+from random import randint, shuffle
 import json
 
 
@@ -15,14 +15,7 @@ def game_list(request,format = None):
     """
     List all code snippets, or create a new snippet.
     """
-    print request.session.get_expiry_age()
-    if request.session.get('test') == None:
-        print("wompa")
-        request.session['test'] ='wwwww2'
-        request.session.set_expiry(100)
-    if request.session.get_expiry_age() <= 0:
-        print session.get('test')
-        request.session.clear_expired()
+
     if request.method == 'GET':
         trees = Tree.objects.all()
         paginator = Paginator(trees,10)
@@ -76,7 +69,9 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
             game = Tree.objects.get(pk = pk)
             if not game:
                 return Response({"error: "+ str(pk)+" doesn't exist"},status = status.HTTP_400_BAD_REQUEST)
-        
+        request.session['game'] = pk
+        request.session['size'] = len(game.root.get_descendants())+1
+        print request.session['size'] 
         serializer = TreeSerializer(game);
         data = serializer.data
         answers = []
@@ -88,6 +83,7 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
             temp['content'] = " "
             for i in temp['children']:
                 data_to_process.append(i)
+        shuffle(answers)
         data['answers'] = answers
         data['max_width'] = game.max_width
         data['pk'] = game.pk
@@ -113,7 +109,12 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
 
                     root = game.root
 
-                    valid = check_tree_post(postRoot,root)
+                    request.session['correct'] = 0
+                    valid = check_tree_post(postRoot,root,request.session)
+                    print request.session.get('correct');
+                    if request.session.get('correct') == request.session.get('size'):
+                        serializer.data['complete'] = True
+                        print serializer.data
                     if valid:
                         return Response(serializer.data, status = status.HTTP_200_OK)
                     else:
@@ -162,13 +163,14 @@ def check_new_tree(node, correctLevel = None):
 
     return valid
 
-def check_tree_post(node, answer_node):
+def check_tree_post(node, answer_node, session):
     valid = True
     node['correct'] = None
     if node['content'] != answer_node.content :
         node['correct'] = False
     elif node['content'] == answer_node.content:
         node['correct'] = True
+        session['correct'] += 1
     node['errors'] = {}
     if node['level'] != answer_node.get_level():
         valid = False
@@ -179,9 +181,9 @@ def check_tree_post(node, answer_node):
     else:
         children = answer_node.get_children()
         for i in range(0,len(children)):
-            valid = check_tree_post(node['children'][i], children[i])
+            valid = check_tree_post(node['children'][i], children[i],session)
 
     return valid
 
-
+# def check_sub_balance
 #     
