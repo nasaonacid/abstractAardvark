@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view
-from abstractAardvark.models import Tree
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from abstractAardvark.models import Tree, User
 from abstractAardvark.serializers import NodeSerializer, TreeSerializer, PaginatedTreeSerializer
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from random import randint, shuffle
@@ -11,11 +13,11 @@ import json
 
 
 @api_view(['GET','POST'])
+@permission_classes((IsAuthenticatedOrReadOnly,))
 def game_list(request,format = None):
     """
     List all code snippets, or create a new snippet.
     """
-
     if request.method == 'GET':
         trees = Tree.objects.all()
         paginator = Paginator(trees,10)
@@ -87,6 +89,7 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         data['answers'] = answers
         data['max_width'] = game.max_width
         data['pk'] = game.pk
+        data.pop('creator')
         return Response(data)
         
 
@@ -113,7 +116,7 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
                     valid = check_tree_post(postRoot,root,request.session)
                     print request.session.get('correct');
                     if request.session.get('correct') == request.session.get('size'):
-                        serializer.data['complete'] = True
+                        serializer.data['root']['complete'] = True
                         print serializer.data
                     if valid:
                         return Response(serializer.data, status = status.HTTP_200_OK)
@@ -126,6 +129,29 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'DELETE':
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def user_games(request, username, format = None):
+
+    user= User.objects.filter(username = username)
+
+
+    if user:
+        queryset = Tree.objects.filter(creator = user[0].id)
+        paginator = Paginator(queryset,1)
+        page = request.QUERY_PARAMS.get('page')        
+        try:
+            trees = paginator.page(page)
+        except PageNotAnInteger:
+            trees = paginator.page(1)
+        except EmptyPage:
+            trees = paginator.page(paginator.num_pages)
+
+        serializer_context = {'request': request}
+        serializer = PaginatedTreeSerializer(trees, context = serializer_context)
+
+        return Response(serializer.data)
+    return Response({}, status = status.HTTP_204_NO_CONTENT)
 
 def makeProcessList(node):
     processedList = [node]
@@ -184,6 +210,8 @@ def check_tree_post(node, answer_node, session):
             valid = check_tree_post(node['children'][i], children[i],session)
 
     return valid
+
+
 
 # def check_sub_balance
 #     

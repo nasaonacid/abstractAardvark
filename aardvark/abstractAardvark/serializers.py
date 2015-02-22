@@ -2,7 +2,15 @@ from rest_framework import serializers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from abstractAardvark.models import Node, Tree
 from rest_framework.pagination import PaginationSerializer
+from django.contrib.auth.models import User
 
+
+class UserSerializer(serializers.ModelSerializer):
+    trees = serializers.PrimaryKeyRelatedField(many = True, queryset = Tree.objects.all())
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'trees')
 
 class NodeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,10 +34,11 @@ NodeSerializer._declared_fields['children'] = NodeSerializer(many=True)#no self 
 
 class TreeSerializer(serializers.ModelSerializer):
     root = NodeSerializer()
+    creator = serializers.ReadOnlyField(source = 'creator.username')
     
     class Meta:
         model = Tree
-        fields = ('height','difficulty','root')
+        fields = ('height','difficulty','root', 'creator')
         depth = 1
 
     def create(self, validated_data):

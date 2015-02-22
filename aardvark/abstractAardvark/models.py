@@ -17,7 +17,7 @@ class Tree(models.Model):
     height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)], default = 0)
     difficulty = models.CharField(max_length = 6, choices = CHOICES, default = 'easy')
     max_width = models.IntegerField(default = 0)
-    # created_by = models.ForeignKey(User)
+    creator = models.ForeignKey(User, related_name='trees')
     root = models.ForeignKey('Node')
 
 

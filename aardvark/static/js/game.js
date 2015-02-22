@@ -1,6 +1,6 @@
 var stage;
 var pageWidth = $("#container").width();
-var pageHeight = $(window).height()-100;
+var pageHeight = $(window).height()-200;
 var hPadding;
 var hierrarchyLayer;
 var answerLayer;
@@ -189,7 +189,7 @@ function drawAnswers(answers){
 
     //set the x and y coordinates so that we start at the lowest area. 
 
-    var y = hPadding*current_tree.height*2;
+    var y = hPadding*((current_tree.height*2)+0.5);
 
     wpad= pageWidth/(answers.length+1)
     var x = wpad/2;
@@ -244,7 +244,7 @@ function drawAnswers(answers){
                     data: "json="+JSON.stringify(current_tree),
                     success:function(data){
                         console.log("under here");
-                        console.log(data.correct);
+                        console.log(data);
                         var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
                         if(status == true){
                             validDrop(evt);

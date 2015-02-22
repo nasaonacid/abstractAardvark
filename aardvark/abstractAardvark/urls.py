@@ -6,9 +6,10 @@ urlpatterns = (
     url(r'^game/$',webviews.load_game),
     url(r'^api/games/$', apiviews.game_list),
     url(r'^api/games/start((?:/(?P<pk>[0-9]+))|(?:/(?P<diff>[a-z]+)))?/$', apiviews.game_detail),
+    url(r'^api/games/(?P<username>[a-zA-z0-9_]{1,30})/$',apiviews.user_games),
 )
 
 urlpatterns = format_suffix_patterns(urlpatterns)
-# urlpatterns += [
-# 	url(r'^api-auth/', include('rest_framework.urls', namespace = 'rest_framework')),
-# ]
+urlpatterns += [
+	url(r'^api-auth/', include('rest_framework.urls', namespace = 'rest_framework')),
+]

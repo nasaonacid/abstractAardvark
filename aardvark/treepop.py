@@ -4,8 +4,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aardvark.settings")
 import django
 django.setup()
 
+import re
 from nltk.corpus import wordnet as wn
-from abstractAardvark.models import Tree
+from abstractAardvark.models import Tree, User
 from abstractAardvark.models import Node as MNode
 from abstractAardvark.serializers import calc_max_width
 class Node(object):
@@ -37,30 +38,52 @@ class Node(object):
  
     def __str__(self, level=0):
         node = "\t" * level + str(self.content) + "\n"
+        print node
         for child in self.children:
-                node += child.__str__(level+1)
+            node += child.__str__(level+1)
         return node
 
 
 def create_wordnet_tree(root_word = None):
     if not root_word:
-        return wordnet_tree(wn.synset("entity.n.01"))
+        return wordnet_tree(wn.synset("physical_entity.n.01"))
     else:
         return wordnet_tree(wn.synset(root_word+"n.01"))
 
 def wordnet_tree(word,parent = None):
     children = word.hyponyms()
     node = Node(word.name().split(".")[0], parent)
-    for i in children:
-        if i.name().split(".")[1] == "n":
-            node.children.append(wordnet_tree(i,node))
-        
+    if not parent:
+        for i in children:
+            if i.name().split(".")[1] == "n":
+                    next = wordnet_tree(i,node)
+                    if next:
+                        print next
+                        node.children.append(next)
+    else:
+        if node.content.isalpha():
+            for i in children:
+                if i.name().split(".")[1] == "n":
+                    next = wordnet_tree(i,node)
+
+                    if next:
+                        print next
+                        node.children.append(next)
+        else:
+
+            return None
+
+
+
+            
+    
     return node;
 
-def process_tree(node):
+def process_tree(node, users):
     process_list = []
     process_list.append(node)
     iteration= 0
+
     while iteration <250 and process_list:
         iteration+=1
         print iteration
@@ -77,7 +100,7 @@ def process_tree(node):
                 difficulty = 'hard'
             elif total>4 and total<=13:
                 difficulty = 'medium'
-            t = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width)
+            t = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width, creator = users[iteration%3])
             t.save()
             for i in current.children:
                 process_list.append(i)
@@ -105,12 +128,20 @@ def process_node(node, parent = None):
             depth = max(nos)
     return n, depth
 
+def add_superuser(username,password):
+    u = User.objects.create_superuser(username=username, password=password,email = None)
+    return u
     
 
 def populate():
     x = create_wordnet_tree()
+    users = []
+    print x.children
+    users.append(add_superuser(username="nasaonacid", password="password"))
+    users.append(add_superuser(username="michaelroddy", password="password"))
+    users.append(add_superuser(username="KombuchaShroomz", password="password"))
     # print x
-    process_tree(x)
+    process_tree(x, users)
 
 if __name__ == '__main__':
     print "Starting abstractAardvark population script..."
