@@ -47,8 +47,8 @@ def game_list(request,format = None):
                 return Response("tree size doesn't match that specified in post", status =status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET','POST','DELETE'])
-def game_detail(request,pk = None,diff = 'easy', format = None):
+@api_view(['GET','POST'])
+def game_control(request,pk = None,diff = 'easy', format = None):
     """
     Retrieve a new game, and verify answers
 
@@ -90,7 +90,7 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
         data['max_width'] = game.max_width
         data['pk'] = game.pk
         data.pop('creator')
-        return Response(data)
+        return Response(data, status = status.HTTP_200_OK)
         
 
         #check content then check depth
@@ -127,8 +127,24 @@ def game_detail(request,pk = None,diff = 'easy', format = None):
 
 
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['GET','DELETE'])
+@permission_classes((IsAuthenticatedOrReadOnly,))
+def game_detail(request,pk):
+    try:
+        game = Tree.objects.get(pk = pk)
+    except Tree.DoesNotExist:
+        return Response(status = status.HTTP_404_NOT_FOUND)
+    if request.method == 'GET':
+        serializer = TreeSerializer(game)
+        data = serializer.data
+        data['max_width'] = game.max_width
+        return Response(data, status = status.HTTP_200_OK)
     elif request.method == 'DELETE':
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET'])
 def user_games(request, username, format = None):

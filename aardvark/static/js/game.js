@@ -1,6 +1,6 @@
 var stage;
 var pageWidth = $("#container").width();
-var pageHeight = $(window).height()-200;
+var pageHeight = $(window).height()-150;
 var hPadding;
 var hierrarchyLayer;
 var answerLayer;
@@ -339,7 +339,7 @@ function drawAnswerGroup( answer, x , y, wpad){
             height: current_tree.boxHeight,
             width: current_tree.boxWidth,
             text: answer,
-            fontSize: 15,
+            fontSize: 10,
             fontFamily: 'Calibri',
             fill: 'black'
         });
