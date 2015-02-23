@@ -9,6 +9,7 @@ var originalWidth = pageWidth;
 var originalHeight = pageHeight;
 var current_tree; 
 var original_tree;
+var csrftoken = getCookie('csrftoken');
 //instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
 
 if(pageWidth == null)
@@ -185,6 +186,27 @@ function drawArrow(node, child){
     return group;
 }
 
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
 function drawAnswers(answers){
 
     //set the x and y coordinates so that we start at the lowest area. 
@@ -237,6 +259,13 @@ function drawAnswers(answers){
                 evt.target.setAttr('x',matched.x);
                 evt.target.setAttr('y',matched.y);
                 updateCopy();
+                $.ajaxSetup({
+                    beforeSend: function(xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                        }
+                    }
+                });
                 $.ajax({
                     type: "POST",
                     url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
@@ -258,7 +287,7 @@ function drawAnswers(answers){
                         stage.draw();
                     },
                     error: function(jqXHR, status , errorThrown){
-                        console.log(jqXHR.status);
+                        console.log(jqXHR);
                         console.log(status);
                         console.log(errorThrown);
                         code = jqXHR.status

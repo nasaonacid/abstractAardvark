@@ -53,6 +53,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
     Retrieve a new game, and verify answers
 
     """
+    print "hello"
     choices = ['easy','medium','hard']
 
     if request.method == 'GET':
