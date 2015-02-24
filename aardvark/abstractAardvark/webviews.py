@@ -12,8 +12,8 @@ def load_game(request):
 def permissions_check(user):
     return False
 
-# @user_passes_test(permissions_check(None))
-def tree_detail(request, user):
+@user_passes_test(lambda u: u.is_superuser)
+def tree_detail(request):
     return render(request, 'answers.html',{})
 
 def user_login(request):
@@ -70,32 +70,24 @@ def register(request):
 
     # If it's a HTTP POST, we're interested in processing form data.
     if request.method == 'POST':
-        # Attempt to grab information from the raw form information.
-        # Note that we make use of both UserForm and UserProfileForm.
+
         user_form = UserForm(data=request.POST)
         print user_form
 
-
-        # If the two forms are valid...
         if user_form.is_valid():
-            # Save the user's form data to the database.
+
             user = user_form.save()
 
-            # Now we hash the password with the set_password method.
-            # Once hashed, we can update the user object.
+
             user.set_password(user.password)
             user.save()
 
-            # Now sort out the UserProfile instance.
-            # Since we need to set the user attribute ourselves, we set commit=False.
-            # This delays saving the model until we're ready to avoid integrity problems.
+            username = request.POST.get('username')
+            password = request.POST.get('password')
 
-            # Did the user provide a profile picture?
-            # If so, we need to get it from the input form and put it in the UserProfile model.
-
-            # Update our variable to tell the template registration was successful.
-            registered = True
-
+            user = authenticate(username=username, password=password)
+            login(request,user)
+            return HttpResponseRedirect('/game/')
         # Invalid form or forms - mistakes or something else?
         # Print problems to the terminal.
         # They'll also be shown to the user.

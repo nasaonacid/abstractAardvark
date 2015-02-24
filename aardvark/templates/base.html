@@ -42,10 +42,10 @@
               <li><a href="{% url 'logout' %}">Logout</a><li>
             {% else %}
               <li ><a href="{% url 'login' %}">Login</a><li>
-              <li><a href="{% url 'register' %}"></a></li>
+              <li><a href="{% url 'register' %}">Register</a></li>
             {% endif %}
             {% if user.is_superuser %}
-              <li ><a href="{%url 'verify_trees' %}"></a></li>
+              <li ><a href="{%url 'verify_trees' %}">Staff</a></li>
             {% endif %}
           </ul>
         </div>

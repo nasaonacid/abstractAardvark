@@ -6,6 +6,7 @@ from rest_framework import permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from abstractAardvark.models import Tree, User
 from abstractAardvark.serializers import NodeSerializer, TreeSerializer, PaginatedTreeSerializer
+from abstractAardvark.permissions import IsStaffOrReadOnly
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from random import randint, shuffle
 import json
@@ -13,7 +14,7 @@ import json
 
 
 @api_view(['GET','POST'])
-@permission_classes((IsAuthenticatedOrReadOnly,))
+@permission_classes((IsStaffOrReadOnly,))
 def game_list(request,format = None):
     """
     List all code snippets, or create a new snippet.
@@ -132,7 +133,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
 
 
 @api_view(['GET','DELETE'])
-@permission_classes((IsAuthenticatedOrReadOnly,))
+@permission_classes((IsStaffOrReadOnly,))
 def game_detail(request,pk):
     try:
         game = Tree.objects.get(pk = pk)
@@ -144,7 +145,7 @@ def game_detail(request,pk):
         data['max_width'] = game.max_width
         return Response(data, status = status.HTTP_200_OK)
     elif request.method == 'DELETE':
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        return Response({},status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
