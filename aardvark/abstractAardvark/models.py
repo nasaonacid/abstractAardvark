@@ -25,6 +25,7 @@ class Node(MPTTModel):
     content = models.CharField(max_length = 255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
     level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)], default = 0)
+    balance = models.TextField(default = '')
     class MPTTMeta:
         order_insertion_by = ['content']
 
@@ -53,6 +54,16 @@ def tree_update(t):
         current.save()
         for i in current.get_children():
             queue.append(i)
+
+
+def update_balance(root):
+    children = root.get_children()
+    balance = {}
+    for i in range(0,len(children)):
+        balance[i] = update_balance(children[i])
+    root.balance = str(balance)
+    root.save()
+    return balance
 
 
 

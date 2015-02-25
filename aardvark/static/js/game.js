@@ -10,6 +10,7 @@ var originalHeight = pageHeight;
 var current_tree; 
 var original_tree;
 var csrftoken = getCookie('csrftoken');
+var current_difficulty;
 //instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
 
 if(pageWidth == null)
@@ -19,9 +20,10 @@ if (pageHeight == null)
 
 get_game('easy');
 function get_game(difficulty){
-
+    current_difficulty = difficulty;
     $.getJSON("http://127.0.0.1:8000/api/games/start/"+difficulty+"/")
     .success(function(data){
+        console.log(data.pk)
         current_tree = data;
         initStage();
     })
@@ -106,7 +108,7 @@ function drawHierrarchy(node){
             process_list.push(current.children[i]);
         }
         group.on('mouseover touchstart', function(evt) {
-            highlight(evt, 'red',3);
+            highlight(evt, 'orange',3);
         });
         // when the mouse leaves the box, unhighlight the box
         group.on('mouseout touchend', function(evt) {
@@ -330,6 +332,11 @@ function clearDrop(evt){
 function processPostSucess(data, content){
     data_list = [];
     current_list = [];
+    console.log(typeof(data.root.complete))
+    if(data.root.complete){
+        console.log("Complete");
+
+    }
     data_list.push(data.root);
     current_list.push(current_tree.root)
     while (data_list.length >0){

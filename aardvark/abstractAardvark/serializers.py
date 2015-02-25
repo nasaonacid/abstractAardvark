@@ -13,9 +13,11 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'trees')
 
 class NodeSerializer(serializers.ModelSerializer):
+    balance = serializers.CharField(required = False)
+
     class Meta:
         model = Node
-        fields = ('content','level','children')
+        fields = ('content','level','children', 'balance')
         depth = 1
 
     def create(self,validated_data,parent = None):
@@ -48,10 +50,20 @@ class TreeSerializer(serializers.ModelSerializer):
         root_data = validated_data.pop('root')
         nSerial = NodeSerializer(data = root_data)
         root = nSerial.save() if nSerial.is_valid() else None
+        update_balance(root)
         max_width = calc_max_width(root)
 
         tree = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width)
         return tree
+
+def update_balance(root):
+    children = root.get_children()
+    balance = {}
+    for i in range(0,len(children)):
+        balance[i] = update_balance(children[i])
+    root.balance = str(balance)
+    root.save()
+    return balance
 
 def calc_max_width(node):
     width_list = {}
@@ -73,3 +85,5 @@ class PaginatedTreeSerializer(PaginationSerializer):
 
     class Meta:
         object_serializer_class = TreeSerializer
+
+
