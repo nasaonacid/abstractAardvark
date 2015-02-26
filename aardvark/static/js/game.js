@@ -21,7 +21,7 @@ if (pageHeight == null)
 get_game('easy');
 function get_game(difficulty){
     current_difficulty = difficulty;
-    $.getJSON("http://127.0.0.1:8000/api/games/start/"+difficulty+"/")
+    $.getJSON("http://127.0.0.1:8000/api/games/start/"+40+"/")
     .success(function(data){
         console.log(data.pk)
         current_tree = data;
@@ -49,6 +49,7 @@ function initStage(){
 
     drawHierrarchy(current_tree.root);
     drawAnswers(current_tree.answers);
+
 
     stage.add(hierrarchyLayer);
     stage.add(answerLayer);
@@ -276,7 +277,9 @@ function drawAnswers(answers){
                     success:function(data){
                         console.log("under here");
                         console.log(data);
+                        console.log(answerLayer)
                         var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
+                        check_all(data);
                         if(status == true){
                             validDrop(evt);
                             setTimeout(function() {
@@ -437,20 +440,14 @@ function checkMatch(item){
     var node = current_tree.root;
     var process_list = [];
     process_list.push(node);
-    // console.log(current_tree);
-    // console.log(item);
+
     while(process_list.length>0){
         current = process_list.pop();
-        // console.log("x : "+current.x + " == "+ x);
-        // console.log("y : "+current.y + " == "+ y);
 
         if(Math.abs(x - current.x) <= dropX && Math.abs(y-current.y)<= dropY){
 
             if( typeof(current.correct)=="undefined" | current.correct===null){
-                // console.log("Match");
-                // console.log(current);
-                // console.log(current.correct)
-                // console.log(item);
+
 
                 updateCopy();
                 item.currentMatch = current;
@@ -485,5 +482,22 @@ function adjustments(){
     stage.setScaleX(xRatio);
     stage.setScaleY(yRatio);
     stage.draw();
+
+}
+
+
+function check_all(data){
+    console.log('check_all')
+    for (var i = 0; i < answerLayer.children.length; i++) {
+        if (answerLayer.children[i].currentMatch!= undefined){
+            console.log("we got a match")
+            console.log(answerLayer.children[i].currentMatch.correct)
+            if (answerLayer.children[i].currentMatch.correct !=true){
+                
+                answerLayer.children[i].setAttr('draggable',true);
+                answerLayer.children[i].setAttr('colour','red')
+            }
+        }
+    };
 
 }
