@@ -21,9 +21,9 @@ if (pageHeight == null)
 get_game('easy');
 function get_game(difficulty){
     current_difficulty = difficulty;
-    $.getJSON("http://127.0.0.1:8000/api/games/start/"+40+"/")
+    $.getJSON("http://127.0.0.1:8000/api/games/start/"+current_difficulty+"/")
     .success(function(data){
-        console.log(data.pk)
+        // console.log(data.pk)
         current_tree = data;
         initStage();
     })
@@ -222,91 +222,10 @@ function drawAnswers(answers){
     for (i = 0; i<answers.length;i++){
         var group = drawAnswerGroup(answers[i],x,y,wpad);
 
-
-        // on mouse over a box highlight the box
-        group.on('mouseover touchstart', function(evt) {
-            this.moveToTop();
-            rect = evt.target.parent.children[0];
-            rect.setAttr('strokeWidth',2.5);
-            answerLayer.draw();
-            document.body.style.cursor = 'pointer';
-        });
-        // when the mouse leaves the box, unhighlight the box
-        group.on('mouseout touchend', function(evt) {
-            rect = evt.target.parent.children[0];
-            rect.setAttr('strokeWidth',1);
-            answerLayer.draw();
-            document.body.style.cursor = 'default';
-        });
-
-            // handler for drag event.
-        group.on('dragstart', function(evt) {
-            this.moveToTop();
-            clearDrop(evt);
-
-            if(evt.target.currentMatch!= null){
-                x = evt.target.currentMatch.correct;
-                evt.target.currentMatch.correct = null;
-                evt.target.currentMatch.content = " ";
-                evt.target.currentMatch = null;
-
-            }
-            stage.draw();
-        });
-
-        //hnaadler for drag drop event
-        group.on('dragend', function(evt) {
-            var matched = checkMatch(evt.target);
-
-            if(matched != null){
-                evt.target.setAttr('x',matched.x);
-                evt.target.setAttr('y',matched.y);
-                updateCopy();
-                $.ajaxSetup({
-                    beforeSend: function(xhr, settings) {
-                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                        }
-                    }
-                });
-                $.ajax({
-                    type: "POST",
-                    url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
-                    // url: "http://127.0.0.1:8000/api/games/start/"+20000000+"/",
-                    data: "json="+JSON.stringify(current_tree),
-                    success:function(data){
-                        console.log("under here");
-                        console.log(data);
-                        console.log(answerLayer)
-                        var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
-                        check_all(data);
-                        if(status == true){
-                            validDrop(evt);
-                            setTimeout(function() {
-                                  evt.target.setDraggable(false);
-                            }, 50);
-                        }
-                        else{
-                            invalidDrop(evt);
-                        }
-                        stage.draw();
-                    },
-                    error: function(jqXHR, status , errorThrown){
-                        console.log(jqXHR);
-                        console.log(status);
-                        console.log(errorThrown);
-                        code = jqXHR.status
-                        if (code == 404){
-                            console.log("done");
-                            $('#lossAlert').addClass('in');
-                        } 
-                    },
-                    datatype: "json"
-                });
-            }
-
-
-        });
+        mouseover(group);
+        mouseout(group);
+        dragstart(group);
+        dragend(group);
 
         answerLayer.add(group);
         x += wpad;
@@ -345,17 +264,9 @@ function processPostSucess(data, content){
     while (data_list.length >0){
         currentNode = current_list.pop();
         dataNode = data_list.pop();
-        if(dataNode.content == content){
-            // console.log(dataNode.correct);
-            if (dataNode.correct == true){
-                currentNode.correct = true; 
-                return true;
-            }
-            else{
-                currentNode.correct = false;
-                return false
-            }
-        }
+
+        currentNode.correct = dataNode.correct
+
         for( i = 0; i<dataNode.children.length; i++){
             data_list.push(dataNode.children[i]);
             current_list.push(currentNode.children[i]);
@@ -446,8 +357,8 @@ function checkMatch(item){
 
         if(Math.abs(x - current.x) <= dropX && Math.abs(y-current.y)<= dropY){
 
-            if( typeof(current.correct)=="undefined" | current.correct===null){
 
+            if( current.correct== null){
 
                 updateCopy();
                 item.currentMatch = current;
@@ -486,18 +397,119 @@ function adjustments(){
 }
 
 
-function check_all(data){
-    console.log('check_all')
+function check_all(){
+
     for (var i = 0; i < answerLayer.children.length; i++) {
         if (answerLayer.children[i].currentMatch!= undefined){
-            console.log("we got a match")
-            console.log(answerLayer.children[i].currentMatch.correct)
+
             if (answerLayer.children[i].currentMatch.correct !=true){
-                
+                console.log(answerLayer.children[i].children[0])
                 answerLayer.children[i].setAttr('draggable',true);
-                answerLayer.children[i].setAttr('colour','red')
+                answerLayer.children[i].children[0].setAttr('stroke','red');
+                answerLayer.children[i].children[0].setAttr('strokeWidth',3);
+
             }
+            else if (answerLayer.children[i].currentMatch.correct == true){
+                answerLayer.children[i].setAttr('draggable',false);
+                answerLayer.children[i].children[0].setAttr('stroke','green');
+                answerLayer.children[i].children[0].setAttr('strokeWidth',3);
+                answerLayer.children[i].off('mouseover touchstart');
+                answerLayer.children[i].off('mouseout touchend');
+                document.body.style.cursor = 'default';
+            }
+
         }
+        stage.draw()
     };
 
+}
+
+function mouseover(group){
+    group.on('mouseover touchstart', function(evt) {
+        this.moveToTop();
+        rect = evt.target.parent.children[0];
+        rect.setAttr('strokeWidth',2.5);
+        answerLayer.draw();
+        document.body.style.cursor = 'pointer';
+    });
+}
+
+function mouseout(group){
+    group.on('mouseout touchend', function(evt) {
+        rect = evt.target.parent.children[0];
+        rect.setAttr('strokeWidth',1);
+        answerLayer.draw();
+        document.body.style.cursor = 'default';
+    });
+}
+
+function dragstart(group){
+                // handler for drag event.
+    group.on('dragstart', function(evt) {
+        this.moveToTop();
+        clearDrop(evt);
+
+        if(evt.target.currentMatch!= null){
+            x = evt.target.currentMatch.correct;
+            evt.target.currentMatch.correct = null;
+            evt.target.currentMatch.content = " ";
+            evt.target.currentMatch = null;
+
+        }
+        stage.draw();
+    });
+
+}
+
+function dragend(group){
+    group.on('dragend', function(evt) {
+        var matched = checkMatch(evt.target);
+
+        if(matched != null){
+            evt.target.setAttr('x',matched.x);
+            evt.target.setAttr('y',matched.y);
+            updateCopy();
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+            $.ajax({
+                type: "POST",
+                url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
+                // url: "http://127.0.0.1:8000/api/games/start/"+20000000+"/",
+                data: "json="+JSON.stringify(current_tree),
+                success:function(data){
+
+                    // console.log(data);
+
+                    var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
+                    check_all();
+                    // if(status == true){
+                    //     validDrop(evt);
+                    //     setTimeout(function() {
+                    //           evt.target.setDraggable(false);
+                    //     }, 50);
+                    // }
+                    // else{
+                    //     invalidDrop(evt);
+                    // }
+                    stage.draw();
+                },
+                error: function(jqXHR, status , errorThrown){
+                    console.log(jqXHR);
+                    console.log(status);
+                    console.log(errorThrown);
+                    code = jqXHR.status
+                    if (code == 404){
+                        console.log("done");
+                        $('#lossAlert').addClass('in');
+                    } 
+                },
+                datatype: "json"
+            });
+        }
+    });
 }

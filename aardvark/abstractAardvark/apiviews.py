@@ -66,9 +66,9 @@ def game_control(request,pk = None,diff = 'easy', format = None):
                 games = Tree.objects.filter(difficulty = diff)
                 for i in games:
                     if i.pk in request.session.get('used'):
-                        print "used check"
-                        print i.pk
-                        print len(games)
+                        #print "used check"
+                        #print i.pk
+                        #print len(games)
                         games.pop(i);
                 if games:
                     game= games[randint(0,len(games)-1)]
@@ -83,7 +83,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
                 return Response({"error: "+ str(pk)+" doesn't exist"},status = status.HTTP_400_BAD_REQUEST)
         request.session['game'] = pk
         request.session['size'] = len(game.root.get_descendants())+1
-        print request.session['size'] 
+        #print request.session['size'] 
         serializer = TreeSerializer(game);
         data = serializer.data
         answers = []
@@ -124,15 +124,16 @@ def game_control(request,pk = None,diff = 'easy', format = None):
 
                     request.session['correct'] = 0
                     # valid = check_tree_post(postRoot,root,request.session) # older method
-                    print "-------------------------\n improved \n ---------------------------"
+                    #print "-------------------------\n improved \n ---------------------------"
                     valid = check_tree_improved(root, postRoot, request.session)
-                    print valid
-                    print request.session.get('correct')
+                    #print valid
+                    #print request.session.get('correct')
+                    #print postRoot
                     
                     if request.session.get('correct') == request.session.get('size'):
                         request.session['used'].append(pk)
                         serializer.data['root']['complete'] = True
-                        # print serializer.data
+                        # #print serializer.data
                     if valid:
                         return Response(serializer.data, status = status.HTTP_200_OK)
                     else:
@@ -249,7 +250,10 @@ def check_tree_improved(data, json, session):
     valid = True
     json['correct'] = None
     
-    if json['content'] != data.content :
+    if json['content'] == " ":
+        #print "nothing in content"
+        json['correct'] = None
+    elif json['content'] != data.content :
         json['correct'] = False
     
     elif json['content'] == data.content:
@@ -283,7 +287,7 @@ def check_tree_improved(data, json, session):
                 with_answer.append(False)
         
         if not has_answers:
-            print "no answers. Matching all directly"
+            # #print "no answers. Matching all directly"
             for i in range(0,len(json['children'])):
                 valid = check_tree_improved(dChildren[i],json['children'][i],session)
         
@@ -299,46 +303,43 @@ def check_tree_improved(data, json, session):
 
                 for j in range(0, len(dChildren)):                        
                     if i != dChildren[j] and dChildren[j].balance == i.balance:
-                        print "balanced"
                         mirror.append(j)
 
                 balanced_with.append(mirror)
             limbo = []
-            print "Balanced with \n" + str(balanced_with)
+    
 
             for i in range(0,len(json['children'])):
-                if json['children'][i]['content'] != " ":
-                    print i
-                    print json['children'][i]['content']
+
                 if balanced_with[i] == []:
-                    print "No balance match"
+                    # #print "No balance match"
                     available[i] = False
                     valid = check_tree_improved(dChildren[i], json['children'][i], session)
 
                 elif json['children'][i]['content'] == dChildren[i].content and available[i]:
-                    print "matched with its current"
+                    # #print "matched with its current"
                     available[i] = False
                     valid = check_tree_improved(dChildren[i], json['children'][i], session)
 
                 else:
-                    print "Checking all balanced"
+                    # #print "Checking all balanced"
                     matched = False
                     for j in balanced_with[i]:
                         if available[j]:
                             if json['children'][i]['content'] == dChildren[j].content:
-                                print "winner of the last resort"
+                                # #print "winner of the last resort"
                                 available[j] = False
                                 matched = True
                                 valid = check_tree_improved(dChildren[j], json['children'][i], session)
                     if not matched:
 
                         limbo.append(json['children'][i])
-            print limbo            
+            #print limbo            
             for i in limbo:
-                print "we in limbo baby"
+                # #print "we in limbo baby"
                 for j in range(0,len(available)):
                     if(available[j]):
-                        print "Matched limbo"
+                        # #print "Matched limbo"
                         available[j] = False
                         valid = check_tree_improved(dChildren[j], i, session)
 
