@@ -1,22 +1,28 @@
 var stage;
-var pageWidth = $("#container").width();
-var pageHeight = $(window).height()-150;
+var stageWidth = $("#container").width();
+var stageHeight = $(window).height()-150;
 var hPadding;
 var hierrarchyLayer;
 var answerLayer;
+var continueLayer;
+var filterLayer;
 
-var originalWidth = pageWidth;
-var originalHeight = pageHeight;
+
+
+
+
+var originalWidth = stageWidth;
+var originalHeight = stageHeight;
 var current_tree; 
 var original_tree;
 var csrftoken = getCookie('csrftoken');
 var current_difficulty;
 //instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
 
-if(pageWidth == null)
-    pageWidth = 1024;
-if (pageHeight == null)
-    pageHeight = 800;
+if(stageWidth == null)
+    stageWidth = 1024;
+if (stageHeight == null)
+    stageHeight = 800;
 
 get_game('easy');
 function get_game(difficulty){
@@ -38,29 +44,39 @@ function updateCopy(){
 function initStage(){
     stage = new Kinetic.Stage({
         draggable: false,
-        height: pageHeight,
-        width: pageWidth,
+        height: stageHeight,
+        width: stageWidth,
         container: 'container' 
     });
     hierrarchyLayer = new Kinetic.Layer();
     answerLayer = new Kinetic.Layer();
+    continueLayer = new Kinetic.Layer();
+    filterLayer = new Kinetic.Layer({opacity: 0});
     createHierrarchy(current_tree);
     updateCopy();
 
     drawHierrarchy(current_tree.root);
     drawAnswers(current_tree.answers);
 
+    filterLayer.add(new Kinetic.Rect({
+        fill: 'black',
+        width: stageWidth,
+        height: stageHeight,
+        visible: false
+    }));
 
     stage.add(hierrarchyLayer);
     stage.add(answerLayer);
+    stage.add(filterLayer);
+    stage.add(continueLayer);
 }
 
 function createHierrarchy(tree){
     var depth = tree.height; //get tree depth
     if(depth!=null && depth>0){//if not empty
-        hPadding = pageHeight/(2*(depth+1));//calculate horizontal padding
+        hPadding = stageHeight/(2*(depth+1));//calculate horizontal padding
         var boxHeight = hPadding //calculate width and height for boxes
-        var boxWidth = pageWidth/(2*tree.max_width)+1;
+        var boxWidth = stageWidth/(2*tree.max_width)+1;
         tree.boxHeight = boxHeight;
         tree.boxWidth = boxWidth;
         var y = hPadding;
@@ -216,7 +232,7 @@ function drawAnswers(answers){
 
     var y = hPadding*((current_tree.height*2)+0.5);
 
-    wpad= pageWidth/(answers.length+1)
+    wpad= stageWidth/(answers.length+1)
     var x = wpad/2;
     //create a grouping of rectangle, text and a line to make a uml box answer
     for (i = 0; i<answers.length;i++){
@@ -257,6 +273,7 @@ function processPostSucess(data, content){
     console.log(typeof(data.root.complete))
     if(data.root.complete){
         console.log("Complete");
+        drawContinue();
 
     }
     data_list.push(data.root);
@@ -273,6 +290,103 @@ function processPostSucess(data, content){
         }
     }
 }
+
+function drawContinue(){
+    
+    var x = (stageWidth/4);
+    var y = (stageHeight/4);
+    var messageBox = drawMessageBox(x,y);
+    var continueButton = drawButton((x + (stageWidth/10)*3.5),(y+((stageHeight/10)*3.5)),"continue")
+    var quitButton = drawButton((x + (stageWidth/10)*0.5),(y+((stageHeight/10)*3.5)),"quit")
+    
+    continueButton.on('click', function(){
+        get_game(current_difficulty);
+    })
+
+    quitButton.on('click', function(){
+        continueLayer.clear()
+    })
+    continueLayer.add(messageBox)
+    continueLayer.add(continueButton)
+    continueLayer.add(quitButton)
+
+    filterLayer.setAttr('opacity',0.5)
+    filterLayer.children[0].setAttr('visible', true)
+    stage.draw()
+    // continueLayer.add(continue)
+    // continueLayer.add(quit)
+
+}
+
+function drawMessageBox(x,y){
+
+    var group = new Kinetic.Group({
+        draggable: false,
+        x: x,
+        y: y
+    });
+
+    var rect = new Kinetic.Rect({
+        x: 0,
+        y:0,
+        height: stageHeight/2,
+        width: stageWidth/2,
+        fill: 'rgba(255,255,255,1)',
+        stroke:'black',
+        strokeWidth: 1
+    })
+    var complexText = new Kinetic.Text({
+        x: stageWidth/10,
+        y: 0,
+        text: 'Congratulations!\n Do you wish to continue?',
+        fontSize: 18,
+        fontFamily: 'Calibri',
+        fill: '#555',
+        width: 380,
+        padding: 20,
+        align: 'center'
+    });
+
+    group.add(rect);
+    group.add(complexText);
+    return group;
+}
+
+function drawButton(x,y, text){
+
+    //stageheight calculation is the 
+    var group = new Kinetic.Group({
+        draggable: false,
+        x: x,
+        y:y
+    })
+    var rect = new Kinetic.Rect({
+        x:0,
+        y:0,
+        height: stageHeight/10,
+        width: stageWidth/10,
+        strokeWidth: 1,
+        fill: 'rgba(255,255,255,1)',
+        stroke: "black"
+    });
+    var content = new Kinetic.Text({
+        align: "center",
+        x: 0,
+        y: 0,
+        text: text,
+        fontSize: 16,
+        fontFamily: 'Calibri',
+        fill: 'black',
+        padding: 6
+    });
+    group.add(rect);
+    group.add(content);
+    mouseover(group);
+    mouseout(group);
+    return group;
+
+}
+
 /*
  below counts the nodes at each level and returns an array where each
  index is a level in the tree with the value being the amount of nodes
@@ -307,12 +421,12 @@ function drawAnswerGroup( answer, x , y, wpad){
                 var newY = pos.y;
                 if(pos.x < 0)
                     newX = 0;
-                if(pos.x+current_tree.boxWidth>pageWidth)
-                    newX = pageWidth-current_tree.boxWidth;
+                if(pos.x+current_tree.boxWidth>stageWidth)
+                    newX = stageWidth-current_tree.boxWidth;
                 if(pos.y < 0)
                     newY = 0;
-                if(pos.y+current_tree.boxHeight>pageHeight)
-                    newY = pageHeight - current_tree.boxHeight;
+                if(pos.y+current_tree.boxHeight>stageHeight)
+                    newY = stageHeight - current_tree.boxHeight;
                 return {
                     x: newX,
                     y: newY
@@ -377,18 +491,18 @@ function checkMatch(item){
 }
 //returns the width padding for each level 
 function wPadding(level_width,node_width){
-    return (pageWidth-(node_width*level_width)) / (level_width+1);
+    return (stageWidth-(node_width*level_width)) / (level_width+1);
 }
 
 
 function adjustments(){
-    pageWidth = $('#container').width();
-    pageHeight = $(window).height()-100;
-    var xRatio = pageWidth/originalWidth;
-    var yRatio = pageHeight/originalHeight;
+    stageWidth = $('#container').width();
+    stageHeight = $(window).height()-100;
+    var xRatio = stageWidth/originalWidth;
+    var yRatio = stageHeight/originalHeight;
 
-    stage.setAttr('width',pageWidth);
-    stage.setAttr('height',pageHeight);
+    stage.setAttr('width',stageWidth);
+    stage.setAttr('height',stageHeight);
     
     stage.setScaleX(xRatio);
     stage.setScaleY(yRatio);

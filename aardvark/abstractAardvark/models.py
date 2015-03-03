@@ -56,14 +56,7 @@ def tree_update(t):
             queue.append(i)
 
 
-def update_balance(root):
-    children = root.get_children()
-    balance = {}
-    for i in range(0,len(children)):
-        balance[i] = update_balance(children[i])
-    root.balance = str(balance)
-    root.save()
-    return balance
+
 
 
 
