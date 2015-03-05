@@ -57,6 +57,8 @@ def game_control(request,pk = None,diff = 'easy', format = None):
     choices = ['easy','medium','hard']
     if not request.session.get('used'):
         request.session['used'] = []
+    if not request.session.get('score'):
+        request.session['score'] = 0
 
     if request.method == 'GET':
         if pk == None:
@@ -64,14 +66,19 @@ def game_control(request,pk = None,diff = 'easy', format = None):
                 diff = 'easy'
             if diff in choices:
                 games = Tree.objects.filter(difficulty = diff)
-                for i in games:
-                    if i.pk in request.session.get('used'):
-                        #print "used check"
-                        #print i.pk
-                        #print len(games)
-                        games.pop(i);
-                if games:
-                    game= games[randint(0,len(games)-1)]
+                usable = []
+                used =  request.session.get('used')
+                for i in range(0, len(games)):
+                    flag = True
+                    for j in range(0,len(used)):
+                        if games[i].pk == int(used[j]):
+                            print "match"
+                            flag = False
+                    if flag:
+                        usable.append(games[i])
+                if usable:
+                    game= usable[randint(0,len(usable)-1)]
+
 
                 else:
                     return Response({"error":"No trees of this kind exist"}, status = status.HTTP_404_NOT_FOUND)
@@ -99,6 +106,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
         data['answers'] = answers
         data['max_width'] = game.max_width
         data['pk'] = game.pk
+        data['score'] = request.session.get('score')
         data.pop('creator')
         return Response(data, status = status.HTTP_200_OK)
         
@@ -133,6 +141,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
                     if request.session.get('correct') == request.session.get('size'):
                         request.session['used'].append(pk)
                         serializer.data['root']['complete'] = True
+                        request.session['score'] += 1
                         # #print serializer.data
                     if valid:
                         return Response(serializer.data, status = status.HTTP_200_OK)

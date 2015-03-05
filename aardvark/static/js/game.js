@@ -31,9 +31,17 @@ function get_game(difficulty){
     .success(function(data){
         // console.log(data.pk)
         current_tree = data;
-        initStage();
+        initStage(false);
     })
-    .error()
+    .error(function(jqXHR, status , errorThrown){
+                    console.log(jqXHR);
+                    console.log(status);
+                    console.log(errorThrown);
+                    code = jqXHR.status
+                    if (code == 404){
+                        initStage(true)
+                    } 
+                })
     .complete();
 }
 
@@ -41,7 +49,7 @@ function updateCopy(){
     original_tree = JSON.parse(JSON.stringify(current_tree));
 }
 
-function initStage(){
+function initStage(error){
     stage = new Kinetic.Stage({
         draggable: false,
         height: stageHeight,
@@ -52,18 +60,24 @@ function initStage(){
     answerLayer = new Kinetic.Layer();
     continueLayer = new Kinetic.Layer();
     filterLayer = new Kinetic.Layer({opacity: 0});
-    createHierrarchy(current_tree);
-    updateCopy();
-
-    drawHierrarchy(current_tree.root);
-    drawAnswers(current_tree.answers);
-
     filterLayer.add(new Kinetic.Rect({
         fill: 'black',
         width: stageWidth,
         height: stageHeight,
         visible: false
     }));
+    if (error != true){
+        createHierrarchy(current_tree);
+        // updateCopy();
+
+        drawHierrarchy(current_tree.root);
+        drawAnswers(current_tree.answers);
+    }
+    else{
+        errorBox = drawMessageBox(stageWidth/4, stageHeight/4, "No trees left of this difficulty!\n Why not try another?")
+        continueLayer.add(errorBox)
+    }
+
 
     stage.add(hierrarchyLayer);
     stage.add(answerLayer);
@@ -133,7 +147,21 @@ function drawHierrarchy(node){
         });
         hierrarchyLayer.add(group)
     }
+    var complexText = new Kinetic.Text({
+        x: stageWidth*0.8,
+        y: 0,
+        text: 'Score: ' + current_tree.score,
+        fontStyle: 'bold',
+        fontSize: fontSize(),
+        fontFamily: 'Arial',
+        fill: '#555',
+        width: 380,
+        padding: 20,
+        align: 'center'
+    });
+    complexText.offsetX(complexText.width()/2);
 
+    hierrarchyLayer.add(complexText);
 
 }
 
@@ -292,10 +320,12 @@ function processPostSucess(data, content){
 }
 
 function drawContinue(){
-    
+    console.log("drawContinue")
     var x = (stageWidth/4);
     var y = (stageHeight/4);
-    var messageBox = drawMessageBox(x,y);
+    var message = 'Congratulations!\n Do you wish to continue?'
+    console.log(message)
+    var messageBox = drawMessageBox(x,y, message);
     var continueButton = drawButton((x + (stageWidth/10)*3.5),(y+((stageHeight/10)*3.5)),"continue")
     var quitButton = drawButton((x + (stageWidth/10)*0.5),(y+((stageHeight/10)*3.5)),"quit")
     
@@ -318,8 +348,8 @@ function drawContinue(){
 
 }
 
-function drawMessageBox(x,y){
-
+function drawMessageBox(x,y, text){
+    console.log("drawMessageBox" + text)
     var group = new Kinetic.Group({
         draggable: false,
         x: x,
@@ -335,18 +365,19 @@ function drawMessageBox(x,y){
         stroke:'black',
         strokeWidth: 1
     })
+    console.log("here " + group.getAttr('x') + "\n" + stageWidth + "\n" + (group.getAttr('x')+((stageWidth/2)/2)))
     var complexText = new Kinetic.Text({
-        x: stageWidth/10,
+        x: (group.getAttr('x')) ,
         y: 0,
-        text: 'Congratulations!\n Do you wish to continue?',
-        fontSize: 18,
-        fontFamily: 'Calibri',
+        text: text,
+        fontSize: fontSize()*2,
+        fontFamily: 'Arial',
         fill: '#555',
-        width: 380,
-        padding: 20,
+        width: stageWidth/2,
+        padding: 10,
         align: 'center'
     });
-
+    complexText.offsetX(complexText.width()/2);
     group.add(rect);
     group.add(complexText);
     return group;
@@ -374,8 +405,8 @@ function drawButton(x,y, text){
         x: 0,
         y: 0,
         text: text,
-        fontSize: 16,
-        fontFamily: 'Calibri',
+        fontSize: fontSize(),
+        fontFamily: 'Arial',
         fill: 'black',
         padding: 6
     });
@@ -403,8 +434,8 @@ function drawAnswerGroup( answer, x , y, wpad){
             height: current_tree.boxHeight,
             width: current_tree.boxWidth,
             text: answer,
-            fontSize: 10,
-            fontFamily: 'Calibri',
+            fontSize: fontSize(),
+            fontFamily: 'Arial',
             fill: 'black'
         });
         var line = new Kinetic.Line({
@@ -497,7 +528,7 @@ function wPadding(level_width,node_width){
 
 function adjustments(){
     stageWidth = $('#container').width();
-    stageHeight = $(window).height()-100;
+    stageHeight = $(window).height()-150;
     var xRatio = stageWidth/originalWidth;
     var yRatio = stageHeight/originalHeight;
 
@@ -601,15 +632,6 @@ function dragend(group){
 
                     var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
                     check_all();
-                    // if(status == true){
-                    //     validDrop(evt);
-                    //     setTimeout(function() {
-                    //           evt.target.setDraggable(false);
-                    //     }, 50);
-                    // }
-                    // else{
-                    //     invalidDrop(evt);
-                    // }
                     stage.draw();
                 },
                 error: function(jqXHR, status , errorThrown){
@@ -626,4 +648,20 @@ function dragend(group){
             });
         }
     });
+}
+
+function fontSize(){
+    console.log(stageWidth)
+    if (stageWidth >= 1200) {
+        return stageWidth/100
+    }
+    else if (stageWidth>= 992){
+        return (stageWidth/100)*1.3
+    }
+    else if (stageWidth>= 768){
+        return (stageWidth/100)*1.6
+    }
+    else {
+        return (stageWidth/100)*2
+    }
 }
