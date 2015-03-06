@@ -39,7 +39,7 @@ def game_list(request,format = None):
         if serializer.is_valid():
             if serializer.data['height'] == get_tree_height(serializer.data['root']):
                 if check_new_tree(serializer.data['root']):
-                    serializer.save()
+                    serializer.save(creator = request.user)
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
                 else: 
 
@@ -212,13 +212,15 @@ def get_tree_height(node):
 
 #use this to validate tree creates only. With tree posts validate by doing node on node. 
 def check_new_tree(node, correctLevel = None):
-    
+    print dir(node)
     valid = True
     if not correctLevel:
         correctLevel = 0 
 
     if not node.has_key('errors'):
         node['errors'] ={}
+    if not node.has_key('level'):
+        node['level'] = correctLevel
     if node['level'] != correctLevel:
         valid = False
         node['errors']['level'] = "Incorrect level for node"

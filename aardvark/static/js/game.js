@@ -1,22 +1,20 @@
 var stage;
-var stageWidth = $("#container").width();
-var stageHeight = $(window).height()-150;
+
 var hPadding;
 var hierrarchyLayer;
 var answerLayer;
 var continueLayer;
 var filterLayer;
+var current_tree; 
+var current_difficulty;
 
-
-
-
-
+var stageWidth = $("#container").width();
+var stageHeight = $(window).height()-150;
 var originalWidth = stageWidth;
 var originalHeight = stageHeight;
-var current_tree; 
-var original_tree;
+
 var csrftoken = getCookie('csrftoken');
-var current_difficulty;
+
 //instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
 
 if(stageWidth == null)
@@ -29,7 +27,7 @@ function get_game(difficulty){
     current_difficulty = difficulty;
     $.getJSON("http://127.0.0.1:8000/api/games/start/"+current_difficulty+"/")
     .success(function(data){
-        // console.log(data.pk)
+
         current_tree = data;
         initStage(false);
     })
@@ -45,9 +43,6 @@ function get_game(difficulty){
     .complete();
 }
 
-function updateCopy(){
-    original_tree = JSON.parse(JSON.stringify(current_tree));
-}
 
 function initStage(error){
     stage = new Kinetic.Stage({
@@ -56,6 +51,8 @@ function initStage(error){
         width: stageWidth,
         container: 'container' 
     });
+    originalHeight = stageHeight;
+    originalWidth = stageWidth;
     hierrarchyLayer = new Kinetic.Layer();
     answerLayer = new Kinetic.Layer();
     continueLayer = new Kinetic.Layer();
@@ -68,7 +65,6 @@ function initStage(error){
     }));
     if (error != true){
         createHierrarchy(current_tree);
-        // updateCopy();
 
         drawHierrarchy(current_tree.root);
         drawAnswers(current_tree.answers);
@@ -116,8 +112,9 @@ function createHierrarchy(tree){
             } 
         }
     }
-    else
+    else{
         console.log("empty tree error");
+    }
 }
 
 
@@ -278,16 +275,25 @@ function drawAnswers(answers){
 
 function validDrop(evt){
     evt.target.find('Rect')[0].setAttr('stroke','green');
+    evt.target.find('Rect')[0].setAttr('fill', 'green');
     evt.target.find('Rect')[0].setAttr('strokeWidth',3);
+    //console.log(evt.target.find('Rect')[0])
 }
 
 function invalidDrop(evt){
+    //console.log("hello invalid")
     evt.target.find('Rect')[0].setAttr('stroke','red');
+    evt.target.find('Rect')[0].setAttr('fill','red');
     evt.target.find('Rect')[0].setAttr('strokeWidth',3);
+    //console.log(evt.target.find('Rect')[0])
+
+
 }
 
 function clearDrop(evt){
     evt.target.find('Rect')[0].setAttr('stroke','black');
+    evt.target.find('Rect')[0].setAttr('fill','white');
+
     evt.target.find('Rect')[0].setAttr('strokeWidth',1);
 }
 
@@ -298,9 +304,9 @@ function clearDrop(evt){
 function processPostSucess(data, content){
     data_list = [];
     current_list = [];
-    console.log(typeof(data.root.complete))
+    //console.log(typeof(data.root.complete))
     if(data.root.complete){
-        console.log("Complete");
+        //console.log("Complete");
         drawContinue();
 
     }
@@ -320,14 +326,14 @@ function processPostSucess(data, content){
 }
 
 function drawContinue(){
-    console.log("drawContinue")
-    var x = (stageWidth/4);
-    var y = (stageHeight/4);
+    //console.log("drawContinue")
+    var x = (originalWidth/4);
+    var y = (originalHeight/4);
     var message = 'Congratulations!\n Do you wish to continue?'
-    console.log(message)
+    //console.log(message)
     var messageBox = drawMessageBox(x,y, message);
-    var continueButton = drawButton((x + (stageWidth/10)*3.5),(y+((stageHeight/10)*3.5)),"continue")
-    var quitButton = drawButton((x + (stageWidth/10)*0.5),(y+((stageHeight/10)*3.5)),"quit")
+    var continueButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"continue")
+    var quitButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"quit")
     
     continueButton.on('click', function(){
         get_game(current_difficulty);
@@ -349,7 +355,7 @@ function drawContinue(){
 }
 
 function drawMessageBox(x,y, text){
-    console.log("drawMessageBox" + text)
+    //console.log("drawMessageBox" + text)
     var group = new Kinetic.Group({
         draggable: false,
         x: x,
@@ -359,13 +365,13 @@ function drawMessageBox(x,y, text){
     var rect = new Kinetic.Rect({
         x: 0,
         y:0,
-        height: stageHeight/2,
-        width: stageWidth/2,
+        height: originalHeight/2,
+        width: originalWidth/2,
         fill: 'rgba(255,255,255,1)',
         stroke:'black',
         strokeWidth: 1
     })
-    console.log("here " + group.getAttr('x') + "\n" + stageWidth + "\n" + (group.getAttr('x')+((stageWidth/2)/2)))
+    //console.log("here " + group.getAttr('x') + "\n" + originalWidth + "\n" + (group.getAttr('x')+((originalWidth/2)/2)))
     var complexText = new Kinetic.Text({
         x: (group.getAttr('x')) ,
         y: 0,
@@ -394,8 +400,8 @@ function drawButton(x,y, text){
     var rect = new Kinetic.Rect({
         x:0,
         y:0,
-        height: stageHeight/10,
-        width: stageWidth/10,
+        height: originalHeight/10,
+        width: originalWidth/10,
         strokeWidth: 1,
         fill: 'rgba(255,255,255,1)',
         stroke: "black"
@@ -426,7 +432,7 @@ function drawButton(x,y, text){
 function drawAnswerGroup( answer, x , y, wpad){
         node = {'x':0, 'y':0};
         var rect = drawNode(node);
-        // console.log(rect);
+        // //console.log(rect);
         var text = new Kinetic.Text({
             align: "center",
             x: 0,
@@ -450,14 +456,16 @@ function drawAnswerGroup( answer, x , y, wpad){
             dragBoundFunc: function(pos) {
                 var newX = pos.x;
                 var newY = pos.y;
+                var scaledWidth = current_tree.boxWidth*(stageWidth/originalWidth)
+                var scaledHeight = current_tree.boxHeight*(stageHeight/originalHeight)
                 if(pos.x < 0)
                     newX = 0;
-                if(pos.x+current_tree.boxWidth>stageWidth)
-                    newX = stageWidth-current_tree.boxWidth;
+                if(pos.x+scaledWidth>stageWidth)
+                    newX = stageWidth-scaledWidth;
                 if(pos.y < 0)
                     newY = 0;
-                if(pos.y+current_tree.boxHeight>stageHeight)
-                    newY = stageHeight - current_tree.boxHeight;
+                if(pos.y+scaledHeight>stageHeight)
+                    newY = stageHeight - scaledHeight;
                 return {
                     x: newX,
                     y: newY
@@ -488,7 +496,7 @@ function levelCount(node){
 }
 
 function checkMatch(item){
-    // console.log("--------------------------------------")
+    // //console.log("--------------------------------------")
     var x = item.getAttr('x');
     var y = item.getAttr('y');
     var dropX = current_tree.boxWidth / 2
@@ -505,7 +513,6 @@ function checkMatch(item){
 
             if( current.correct== null){
 
-                updateCopy();
                 item.currentMatch = current;
 
                 current.content = item.find('Text')[0].getAttr('text');
@@ -532,6 +539,8 @@ function adjustments(){
     var xRatio = stageWidth/originalWidth;
     var yRatio = stageHeight/originalHeight;
 
+    console.log(xRatio)
+    console.log(yRatio)
     stage.setAttr('width',stageWidth);
     stage.setAttr('height',stageHeight);
     
@@ -548,16 +557,18 @@ function check_all(){
         if (answerLayer.children[i].currentMatch!= undefined){
 
             if (answerLayer.children[i].currentMatch.correct !=true){
-                console.log(answerLayer.children[i].children[0])
+                //console.log(answerLayer.children[i].children[0])
                 answerLayer.children[i].setAttr('draggable',true);
-                answerLayer.children[i].children[0].setAttr('stroke','red');
+                answerLayer.children[i].children[0].setAttr('stroke','#910000');
                 answerLayer.children[i].children[0].setAttr('strokeWidth',3);
+                answerLayer.children[i].children[0].setAttr('fill','#D41C1C');
 
             }
             else if (answerLayer.children[i].currentMatch.correct == true){
                 answerLayer.children[i].setAttr('draggable',false);
-                answerLayer.children[i].children[0].setAttr('stroke','green');
+                answerLayer.children[i].children[0].setAttr('stroke','#1E8C2C');
                 answerLayer.children[i].children[0].setAttr('strokeWidth',3);
+                answerLayer.children[i].children[0].setAttr('fill','5ABE66');
                 answerLayer.children[i].off('mouseover touchstart');
                 answerLayer.children[i].off('mouseout touchend');
                 document.body.style.cursor = 'default';
@@ -613,7 +624,7 @@ function dragend(group){
         if(matched != null){
             evt.target.setAttr('x',matched.x);
             evt.target.setAttr('y',matched.y);
-            updateCopy();
+
             $.ajaxSetup({
                 beforeSend: function(xhr, settings) {
                     if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -628,19 +639,19 @@ function dragend(group){
                 data: "json="+JSON.stringify(current_tree),
                 success:function(data){
 
-                    // console.log(data);
+                    // //console.log(data);
 
                     var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
                     check_all();
                     stage.draw();
                 },
                 error: function(jqXHR, status , errorThrown){
-                    console.log(jqXHR);
-                    console.log(status);
-                    console.log(errorThrown);
+                    //console.log(jqXHR);
+                    //console.log(status);
+                    //console.log(errorThrown);
                     code = jqXHR.status
                     if (code == 404){
-                        console.log("done");
+                        //console.log("done");
                         $('#lossAlert').addClass('in');
                     } 
                 },
@@ -651,7 +662,7 @@ function dragend(group){
 }
 
 function fontSize(){
-    console.log(stageWidth)
+    //console.log(stageWidth)
     if (stageWidth >= 1200) {
         return stageWidth/100
     }

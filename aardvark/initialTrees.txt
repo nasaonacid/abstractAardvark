@@ -1,0 +1,4 @@
+{"height":,"difficulty":"","root":{"content":"","children": []}}
+
+{"height":2,"difficulty":"easy","root":{"content":"book","children": [{"content":"fiction","children": [{"content":"fantasy","children": []}]},{"content":"nonfiction","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"fruit","children": [{"content":"apple", "children": []},{"content":"pear", "children": []},{"content":"orange", "children": []}]}}

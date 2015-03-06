@@ -52,8 +52,10 @@ class TreeSerializer(serializers.ModelSerializer):
         root = nSerial.save() if nSerial.is_valid() else None
         update_balance(root)
         max_width = calc_max_width(root)
+        creator = validated_data.pop('creator')
+        print validated_data
 
-        tree = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width)
+        tree = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width, creator = creator)
         return tree
 
 def update_balance(root):
