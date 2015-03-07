@@ -8,7 +8,8 @@ import re
 from nltk.corpus import wordnet as wn
 from abstractAardvark.models import Tree, User
 from abstractAardvark.models import Node as MNode
-from abstractAardvark.serializers import calc_max_width
+from abstractAardvark.serializers import *
+import json
 class Node(object):
  
     def __init__(self, content=None, parent=None, children=None):
@@ -48,7 +49,7 @@ def create_wordnet_tree(root_word = None):
     if not root_word:
         return wordnet_tree(wn.synset("physical_entity.n.01"))
     else:
-        return wordnet_tree(wn.synset(root_word+"n.01"))
+        return wordnet_tree(wn.synset(root_word+".n.01"))
 
 def wordnet_tree(word,parent = None):
     children = word.hyponyms()
@@ -61,17 +62,17 @@ def wordnet_tree(word,parent = None):
                         print next
                         node.children.append(next)
     else:
-        if node.content.isalpha():
-            for i in children:
-                if i.name().split(".")[1] == "n":
-                    next = wordnet_tree(i,node)
+        # if node.content.isalpha():
+        for i in children:
+            if i.name().split(".")[1] == "n":
+                next = wordnet_tree(i,node)
 
-                    if next:
-                        print next
-                        node.children.append(next)
-        else:
+                if next:
+                    print next
+                    node.children.append(next)
+        # else:
 
-            return None
+        #     return None
 
 
 
@@ -84,12 +85,10 @@ def process_tree(node, users):
     process_list.append(node)
     iteration= 0
 
-    while iteration <250 and process_list:
+    while iteration <500 and process_list:
         iteration+=1
-        print iteration
         current = process_list.pop()
         if len(current.children)>1:
-            print current.content
             root, height= process_node(current)
             height += 1 ##correction for 0 based level
             max_width = calc_max_width(root)
@@ -100,6 +99,8 @@ def process_tree(node, users):
                 difficulty = 'hard'
             elif total>4 and total<=13:
                 difficulty = 'medium'
+            update_balance(root)
+            print difficulty
             t = Tree.objects.create(height = height, difficulty = difficulty, root = root, max_width = max_width, creator = users[iteration%3])
             t.save()
             for i in current.children:
@@ -132,9 +133,25 @@ def add_superuser(username,password):
     u = User.objects.create_superuser(username=username, password=password,email = None)
     return u
     
+def process_file(filename,users):
+    f = open(filename,"r")
+    iteration = 0
+    for line in f:
+        print line
+        if line != "":
+
+            data = json.loads(line)
+            iteration += 1
+            serializer = TreeSerializer(data = data)
+            if serializer.is_valid():
+                serializer.save(creator = users[iteration%3])
+            else:
+                print serializer.errors()  
+    
+    f.close()
 
 def populate():
-    x = create_wordnet_tree()
+    x = create_wordnet_tree("object")
     users = []
     print x.children
     users.append(add_superuser(username="nasaonacid", password="password"))
@@ -142,6 +159,7 @@ def populate():
     users.append(add_superuser(username="KombuchaShroomz", password="password"))
     # print x
     process_tree(x, users)
+    process_file("initialTrees.txt",users)
 
 if __name__ == '__main__':
     print "Starting abstractAardvark population script..."

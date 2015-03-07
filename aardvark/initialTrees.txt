@@ -1,4 +1,21 @@
-{"height":,"difficulty":"","root":{"content":"","children": []}}
-
-{"height":2,"difficulty":"easy","root":{"content":"book","children": [{"content":"fiction","children": [{"content":"fantasy","children": []}]},{"content":"nonfiction","children": []}]}}
+{"height":3,"difficulty":"easy","root":{"content":"book","children": [{"content":"fiction","children": [{"content":"fantasy","children": []}]},{"content":"nonfiction","children": []}]}}
 {"height":2,"difficulty":"easy","root":{"content":"fruit","children": [{"content":"apple", "children": []},{"content":"pear", "children": []},{"content":"orange", "children": []}]}}
+{"height":3,"difficulty":"easy","root":{"content":"game","children": [{"content":"board_game","children": []},{"content":"video_game","children": []},{"content":"card_game","children": []}]}}
+{"height":3,"difficulty":"easy","root":{"content":"sport","children": [{"content":"contact_sport","children": [{"content":"football","children": []},{"content":"rugby","children": []}]}]}}
+{"height":3,"difficulty":"easy","root":{"content":"object","children": [{"content":"string","children": []},{"content":"class","children": [{"content":"subclass","children": []}]}]}}
+{"height":2,"difficulty":"easy","root":{"content":"car","children": [{"content":"petrol","children": []},{"content":"diesel","children": []},{"content":"electric","children": []}]}}
+{"height":4,"difficulty":"easy","root":{"content":"fiction","children": [{"content":"fantasy","children": [{"content":"science_fiction","children": [{"content":"cyberpunk","children": []}]}]}]}}
+{"height":2,"difficulty":"easy","root":{"content":"animation","children": [{"content":"stop motion","children": []},{"content":"mechanical","children": []},{"content":"hand drawn","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"instrument","children": [{"content":"percussion","children": []},{"content":"string","children": []},{"content":"wind","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"religion","children": [{"content":"monotheism","children": []},{"content":"polytheism","children": []},{"content":"pantheism","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"paradigm","children": [{"content":"procedural","children": []},{"content":"object-oriented","children": []},{"content":"functional","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"rock","children": [{"content":"rockabilly","children": []},{"content":"metal","children": []},{"content":"prog rock","children": []}]}}
+{"height":3,"difficulty":"easy","root":{"content":"vertebrate","children": [{"content":"mammal","children": [{"content":"aardvark","children": []}]},{"content":"amphibian","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"dinosaur","children": [{"content":"herbivore","children": []},{"content":"carnivore","children": []},{"content":"omnivore","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"Operating System","children": [{"content":"Linux","children": []},{"content":"Windows","children": []},{"content":"OSX","children": []}]}}
+{"height":2,"difficulty":"easy","root":{"content":"Scripting Language","children": [{"content":"Python","children": []},{"content":"Bash","children": []},{"content":"Lua","children": []}]}}
+{"height":3,"difficulty":"easy","root":{"content":"Object","children": [{"content":"abstractMap","children": [{"content":"TreeMap","children": []},{"content":"Hashmap","children": []}]}]}}
+{"height":3,"difficulty":"easy","root":{"content":"animal","children": [{"content":"cat","children": []},{"content":"dog","children": [{"content":"Pug","children": []}]}]}}
+{"height":3,"difficulty":"easy","root":{"content":"tree_structure","children": [{"content":"b_tree","children": [{"content":"binary_search_tree","children": []}]}]}}
+{"height":4,"difficulty":"easy","root":{"content":"region","children": [{"content":"territory","children": [{"content":"country","children": [{"content":"scotland","children": []}]}]}]}}
+{"height":2,"difficulty":"easy","root":{"content":"disaster","children": [{"content":"tsunami","children": []},{"content":"famine","children": []}]}}
