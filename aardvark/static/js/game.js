@@ -49,9 +49,6 @@ function get_game(difficulty){
                     code = jqXHR.status
                     data = jqXHR.responseJSON
                     if (code == 404){
-                        // initStage(true)
-                        console.log(jqXHR)
-                        console.log(data)
                         if (data.error == "diff_completed"){
                             console.log("finished one")
                             drawDiffComplete()
@@ -123,9 +120,9 @@ function drawDiffComplete(){
     var index = choices.indexOf(current_difficulty)
     choices.splice(index,1);
     items.splice(index,1);
-    console.log(index+"\n"+current_difficulty+"\n" + choices)
+
     var message = current_difficulty + " cleared!\n Why not try another?"
-    //console.log(message)
+
     var messageBox = drawMessageBox(x,y, message);
     var firstButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),choices[0],items[0].inner, items[0].outer)
     var secondButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),choices[1],items[1].inner, items[1].outer)
@@ -147,16 +144,16 @@ function drawFinish(){
     var x = (originalWidth/4);
     var y = (originalHeight/4);
     var message = 'Congratulations!\n You have beat the game!'
-    //console.log(message)
+
     var messageBox = drawMessageBox(x,y, message);
     var continueButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"submit score","#5ABE66", "#1E8C2C")
     var quitButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"quit","#D41C1C","#910000")
     
-    continueButton.on('click', function(){
+    continueButton.on('click tap', function(){
         console.log("score submit")
     })
 
-    quitButton.on('click', function(){
+    quitButton.on('click tap', function(){
         gameStart()
     })
     continueLayer.add(messageBox)
@@ -174,7 +171,7 @@ function drawTitle(){
 
     var message = 'Welcome to AbstractAardvark!\n Please select your difficulty:'
     var messageBox = drawMessageBox(x,y, message);
-    console.log(messageBox)
+
     y = y + messageBox.children[1].height()/2
     var easyButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"easy","#9B88DF", "#4429A1")
     var mediumButton = drawButton((x + (originalWidth/10)*2),(y+((originalHeight/10)*3.5)),"medium","#FFEE8F","#E9CC25")
@@ -185,7 +182,6 @@ function drawTitle(){
     openEvent(hardButton,"hard");
 
 
-    console.log(mediumButton)
     continueLayer.add(messageBox)
     continueLayer.add(easyButton)
     continueLayer.add(mediumButton)
@@ -201,6 +197,10 @@ function drawTitle(){
 function openEvent(button, diff){
 
     button.on('click', function(){
+        get_game(diff);
+        start = false
+    })
+    button.on('tap',function(){
         get_game(diff);
         start = false
     })
@@ -311,14 +311,14 @@ function highlight(evt, colour, width){
 function drawOptions(){
 
     var radius = stageHeight/50
-    console.log(radius)
+
     var colours = [{"inner":"#C4B7F1", "outer":"#4429A1", "id":"easy"},
                     {"inner":"#FFEE8F","outer":"#E9CC25", "id": "medium"},
                      {"inner":"#FF948F","outer":"#E92F25", "id": "hard"}]
     var diff = ["E","M","H"]
 
     var x = (stageWidth*0.5 )-(radius*3)
-    console.log("x: "+ x)
+
     var y = 20
     var toggles = []
     for (var i = 0; i < colours.length; i++) {
@@ -379,7 +379,17 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
     group.add(complexText)
 
     group.siblings = []
-    group.on('click', function(){
+
+    toggleEvent(group, 'click')
+    toggleEvent(group, 'tap')
+    mouseover(group)
+    mouseout(group)
+    return group
+}
+
+function toggleEvent(group, type){
+
+    group.on(type, function(){
         if (group.getAttr('id') != current_difficulty){
             console.log(group.getAttr("x"))
             for (var i = 0; i < group.siblings.length; i++) {
@@ -389,12 +399,7 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
         } 
     
     })
-    mouseover(group)
-    mouseout(group)
-    return group
 }
-
-
 /*
     function to draw the current score
 */
@@ -561,11 +566,11 @@ function drawContinue(){
     var continueButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"continue","#5ABE66", "#1E8C2C")
     var quitButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"quit","#D41C1C","#910000")
     
-    continueButton.on('click', function(){
+    continueButton.on('click tap', function(){
         get_game(current_difficulty);
     })
 
-    quitButton.on('click', function(){
+    quitButton.on('click tap', function(){
         gameStart()
     })
     continueLayer.add(messageBox)
@@ -876,7 +881,6 @@ function mouseout(group){
     event function to handle the dragging of an object within the canvas
 */
 function dragstart(group){
-                // handler for drag event.
     group.on('dragstart', function(evt) {
         this.moveToTop();
         clearDrop(evt);
