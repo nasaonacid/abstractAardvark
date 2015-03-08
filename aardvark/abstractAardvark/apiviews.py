@@ -66,7 +66,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
     if request.method == 'GET':
 
         if request.GET.get('start',None) == "true":
-            print "hello"
+            #print "hello"
             request.session['used'] = []
             request.session['score'] = 0
             for i in choices:
@@ -96,13 +96,13 @@ def game_control(request,pk = None,diff = 'easy', format = None):
                 else:
 
                     request.session[diff]["completed"] = True
-                    print request.session[diff]
+                    #print request.session[diff]
                     all_complete = True
                     for i in choices:
-                        print request.session.get(i)
+                        #print request.session.get(i)
                         if not request.session.get(i)["completed"]:
                             all_complete = False
-                    print all_complete
+                    #print all_complete
                     if all_complete:
                         return Response({"error":"all_completed"}, status = status.HTTP_404_NOT_FOUND)
                     return Response({"error":"diff_completed"}, status = status.HTTP_404_NOT_FOUND)
@@ -148,7 +148,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
         if(data.has_key('json')):
             data = json.loads(data['json'])
         diff = data['difficulty']
-        print diff
+        #print diff
         serializer = TreeSerializer(data = data)
         if serializer.is_valid(): 
             if serializer.data['height'] == get_tree_height(serializer.data['root']):

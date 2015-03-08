@@ -50,11 +50,11 @@ function get_game(difficulty){
                     data = jqXHR.responseJSON
                     if (code == 404){
                         if (data.error == "diff_completed"){
-                            console.log("finished one")
+
                             drawDiffComplete()
                         }
                         else if(data.error == "all_completed"){
-                            console.log("finished everything")
+
                             drawFinish();
                         }
 
@@ -391,7 +391,7 @@ function toggleEvent(group, type){
 
     group.on(type, function(){
         if (group.getAttr('id') != current_difficulty){
-            console.log(group.getAttr("x"))
+
             for (var i = 0; i < group.siblings.length; i++) {
                 group.siblings[i].children[0].setAttr("strokeWidth",1)
             };
@@ -532,9 +532,9 @@ function drawAnswers(answers){
 function processPostSucess(data, content){
     data_list = [];
     current_list = [];
-    //console.log(typeof(data.root.complete))
+
     if(data.root.complete){
-        //console.log("Complete");
+
         drawContinue();
 
     }
@@ -557,11 +557,11 @@ function processPostSucess(data, content){
     function to draw the continue option after the level has been won
 */
 function drawContinue(){
-    //console.log("drawContinue")
+
     var x = (originalWidth/4);
     var y = (originalHeight/4);
     var message = 'Congratulations!\n Do you wish to continue?'
-    //console.log(message)
+
     var messageBox = drawMessageBox(x,y, message);
     var continueButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"continue","#5ABE66", "#1E8C2C")
     var quitButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"quit","#D41C1C","#910000")
@@ -673,7 +673,7 @@ function drawButton(x,y, text, inner, outer){
 function drawAnswerGroup( answer, x , y, wpad){
         node = {'x':0, 'y':0};
         var rect = drawNode(node);
-        // //console.log(rect);
+
         var text = new Kinetic.Text({
             align: "center",
             x: 0,
@@ -806,7 +806,7 @@ function check_all(){
                 answerLayer.children[i].children[0].setAttr('stroke','#1E8C2C');
                 answerLayer.children[i].children[0].setAttr('strokeWidth',3);
                 answerLayer.children[i].children[0].setAttr('fill','#5ABE66');
-                console.log(answerLayer.children[i].children[0].getAttr('fill'))
+
                 answerLayer.children[i].off('mouseover touchstart');
                 answerLayer.children[i].off('mouseout touchend');
                 document.body.style.cursor = 'default';
@@ -825,18 +825,18 @@ function validDrop(evt){
     evt.target.find('Rect')[0].setAttr('stroke','green');
     evt.target.find('Rect')[0].setAttr('fill', 'green');
     evt.target.find('Rect')[0].setAttr('strokeWidth',3);
-    //console.log(evt.target.find('Rect')[0])
+
 }
 
 /*
     event function to handle if an answer has been put in the wrong place 
 */
 function invalidDrop(evt){
-    //console.log("hello invalid")
+
     evt.target.find('Rect')[0].setAttr('stroke','red');
     evt.target.find('Rect')[0].setAttr('fill','red');
     evt.target.find('Rect')[0].setAttr('strokeWidth',3);
-    //console.log(evt.target.find('Rect')[0])
+
 
 
 }
@@ -857,7 +857,7 @@ function clearDrop(evt){
 function mouseover(group){
     group.on('mouseover touchstart', function(evt) {
         this.moveToTop();
-        console.log(group.getAttr("x")+ " "+ group.getAttr("y"))
+
         rect = evt.target.parent.children[0];
         rect.setAttr('strokeWidth',2.5);
         answerLayer.draw();
@@ -920,23 +920,21 @@ function dragend(group){
             $.ajax({
                 type: "POST",
                 url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
-                // url: "http://127.0.0.1:8000/api/games/start/"+20000000+"/",
+
                 data: "json="+JSON.stringify(current_tree),
                 success:function(data){
 
-                    // //console.log(data);
+
 
                     var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
                     check_all();
                     stage.draw();
                 },
                 error: function(jqXHR, status , errorThrown){
-                    //console.log(jqXHR);
-                    //console.log(status);
-                    //console.log(errorThrown);
+
                     code = jqXHR.status
                     if (code == 404){
-                        //console.log("done");
+
                         $('#lossAlert').addClass('in');
                     } 
                 },
@@ -951,7 +949,7 @@ function dragend(group){
     Function to scale font sizes to the various viewport widths
 */
 function fontSize(){
-    //console.log(stageWidth)
+
     if (stageWidth >= 1200) {
         return stageWidth/100
     }
@@ -974,10 +972,6 @@ function adjustments(){
     stageHeight = $(window).height()-50;
     var xRatio = stageWidth/originalWidth;
     var yRatio = stageHeight/originalHeight;
-
-    console.log(stageWidth)
-    console.log(stageHeight)
-    console.log($(window).height())
 
     stage.setAttr('width',stageWidth);
     stage.setAttr('height',stageHeight);
