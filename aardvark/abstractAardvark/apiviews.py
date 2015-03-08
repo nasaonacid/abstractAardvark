@@ -54,33 +54,58 @@ def game_control(request,pk = None,diff = 'easy', format = None):
     Retrieve a new game, and verify answers
 
     """
+
     choices = ['easy','medium','hard']
     if not request.session.get('used'):
         request.session['used'] = []
     if not request.session.get('score'):
         request.session['score'] = 0
-
+    for i in choices:
+        if not request.session.get(i):
+            request.session[i] = {"used":[],"completed":False}
     if request.method == 'GET':
+
+        if request.GET.get('start',None) == "true":
+            print "hello"
+            request.session['used'] = []
+            request.session['score'] = 0
+            for i in choices:
+                request.session[i] = {"used":[], "completed": False}
         if pk == None:
             if diff == None:
                 diff = 'easy'
             if diff in choices:
                 games = Tree.objects.filter(difficulty = diff)
                 usable = []
-                used =  request.session.get('used')
-                for i in range(0, len(games)):
-                    flag = True
-                    for j in range(0,len(used)):
-                        if games[i].pk == int(used[j]):
-                            flag = False
-                    if flag:
-                        usable.append(games[i])
-                if usable:
-                    game= usable[randint(0,len(usable)-1)]
+                difficulty = request.session.get(diff)
+                used = difficulty.get('used')
+                if len(used) <len(games):
+
+                    for i in range(0, len(games)):
+                        flag = True
+
+                        for j in range(0,len(used)):
+                            if games[i].pk == int(used[j]):
+                                flag = False
+                        if flag:
+                            usable.append(games[i])
+                    if usable:
+                        game= usable[randint(0,len(usable)-1)]
 
 
                 else:
-                    return Response({"error":"No trees of this kind exist"}, status = status.HTTP_404_NOT_FOUND)
+
+                    request.session[diff]["completed"] = True
+                    print request.session[diff]
+                    all_complete = True
+                    for i in choices:
+                        print request.session.get(i)
+                        if not request.session.get(i)["completed"]:
+                            all_complete = False
+                    print all_complete
+                    if all_complete:
+                        return Response({"error":"all_completed"}, status = status.HTTP_404_NOT_FOUND)
+                    return Response({"error":"diff_completed"}, status = status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"error":"Difficulty doesn't exist"},status = status.HTTP_400_BAD_REQUEST)
         else:
@@ -106,6 +131,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
         data['max_width'] = game.max_width
         data['pk'] = game.pk
         data['score'] = request.session.get('score')
+        data['difficulty'] = diff
         data.pop('creator')
         return Response(data, status = status.HTTP_200_OK)
         
@@ -121,6 +147,8 @@ def game_control(request,pk = None,diff = 'easy', format = None):
         data = request.data
         if(data.has_key('json')):
             data = json.loads(data['json'])
+        diff = data['difficulty']
+        print diff
         serializer = TreeSerializer(data = data)
         if serializer.is_valid(): 
             if serializer.data['height'] == get_tree_height(serializer.data['root']):
@@ -135,9 +163,9 @@ def game_control(request,pk = None,diff = 'easy', format = None):
 
                     
                     if request.session.get('correct') == request.session.get('size'):
-                        request.session['used'].append(pk)
+                        request.session[diff]["used"].append(pk)
                         serializer.data['root']['complete'] = True
-                        request.session['score'] += 1
+                        request.session['score'] += choices.index(diff)+1
 
                     if valid:
                         return Response(serializer.data, status = status.HTTP_200_OK)

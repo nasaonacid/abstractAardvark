@@ -10,10 +10,10 @@ var current_tree;
 var current_difficulty;
 
 var stageWidth = $("#container").width();
-var stageHeight = $(window).height()-150;
+var stageHeight = $(window).height()-50;
 var originalWidth = stageWidth;
 var originalHeight = stageHeight;
-
+var start = true;
 var csrftoken = getCookie('csrftoken');
 
 //instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
@@ -23,37 +23,50 @@ if(stageWidth == null)
 if (stageHeight == null)
     stageHeight = 800;
 
-get_game('easy');
+gameStart()
+
+function gameStart(){
+    start = true;
+    setup()
+    drawTitle()
+    stage.add(filterLayer);
+    stage.add(continueLayer)
+}
+
 
 /*
     function which sends the request off to the server for the game data. 
 */
 function get_game(difficulty){
     current_difficulty = difficulty;
-    $.getJSON("http://127.0.0.1:8000/api/games/start/"+current_difficulty+"/")
+    $.getJSON("http://127.0.0.1:8000/api/games/start/"+current_difficulty+"/",{start: start})
     .success(function(data){
-
+        start = false
         current_tree = data;
-        initStage(false);
+        initStage();
     })
     .error(function(jqXHR, status , errorThrown){
-                    console.log(jqXHR);
-                    console.log(status);
-                    console.log(errorThrown);
                     code = jqXHR.status
+                    data = jqXHR.responseJSON
                     if (code == 404){
-                        initStage(true)
+                        // initStage(true)
+                        console.log(jqXHR)
+                        console.log(data)
+                        if (data.error == "diff_completed"){
+                            console.log("finished one")
+                            drawDiffComplete()
+                        }
+                        else if(data.error == "all_completed"){
+                            console.log("finished everything")
+                            drawFinish();
+                        }
+
                     } 
                 })
     .complete();
 }
 
-
-
-/*
-    function which sets up all required materials and initialises the game
-*/
-function initStage(error){
+function setup(){
     stage = new Kinetic.Stage({
         draggable: false,
         height: stageHeight,
@@ -67,37 +80,131 @@ function initStage(error){
     continueLayer = new Kinetic.Layer();
     filterLayer = new Kinetic.Layer({opacity: 0});
     optionLayer = new Kinetic.Layer();
-    drawOptions()
+
     filterLayer.add(new Kinetic.Rect({
         fill: 'black',
         width: stageWidth,
         height: stageHeight,
         visible: false
     }));
-    if (error != true){
-        createHierrarchy(current_tree);
+}
 
-        drawHierrarchy(current_tree.root);
-        drawAnswers(current_tree.answers);
-    }
-    else{
-        var errorBox = drawMessageBox(stageWidth/4, stageHeight/4, "No trees left of this difficulty!\n Why not try another?")
-        continueLayer.add(errorBox)
-    }
+
+/*
+    function which sets up all required materials and initialises the game
+*/
+function initStage(){
+    setup()
+    drawOptions()
+
+    createHierrarchy(current_tree);
+
+    drawHierrarchy(current_tree.root);
+    drawAnswers(current_tree.answers);
+    
 
 
     stage.add(hierrarchyLayer);
     stage.add(answerLayer);
     stage.add(optionLayer);
     stage.add(filterLayer);
+
     stage.add(continueLayer);
 }
 
+function drawDiffComplete(){
 
+    var x = (originalWidth/4);
+    var y = (originalHeight/4);
+    var choices = ["easy","medium","hard"]
+    var items = [{"inner":"#9B88DF","outer":"#4429A1"},
+                {"inner":"#FFEE8F","outer":"#E9CC25"},
+                {"inner":"#D41C1C","outer":"#910000"}];
+    var index = choices.indexOf(current_difficulty)
+    choices.splice(index,1);
+    items.splice(index,1);
+    console.log(index+"\n"+current_difficulty+"\n" + choices)
+    var message = current_difficulty + " cleared!\n Why not try another?"
+    //console.log(message)
+    var messageBox = drawMessageBox(x,y, message);
+    var firstButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),choices[0],items[0].inner, items[0].outer)
+    var secondButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),choices[1],items[1].inner, items[1].outer)
+
+    
+    openEvent(firstButton,choices[0]);
+    openEvent(secondButton,choices[1]);
+
+    continueLayer.add(messageBox)
+    continueLayer.add(firstButton)
+    continueLayer.add(secondButton)
+
+    filterLayer.setAttr('opacity',0.5)
+    filterLayer.children[0].setAttr('visible', true)
+    stage.draw()
+}
+
+function drawFinish(){
+    var x = (originalWidth/4);
+    var y = (originalHeight/4);
+    var message = 'Congratulations!\n You have beat the game!'
+    //console.log(message)
+    var messageBox = drawMessageBox(x,y, message);
+    var continueButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"submit score","#5ABE66", "#1E8C2C")
+    var quitButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"quit","#D41C1C","#910000")
+    
+    continueButton.on('click', function(){
+        console.log("score submit")
+    })
+
+    quitButton.on('click', function(){
+        gameStart()
+    })
+    continueLayer.add(messageBox)
+    continueLayer.add(continueButton)
+    continueLayer.add(quitButton)
+
+    filterLayer.setAttr('opacity',0.5)
+    filterLayer.children[0].setAttr('visible', true)
+    stage.draw()
+}
 function drawTitle(){
+
+    var x = (originalWidth/4);
+    var y = (originalHeight/4);
+
+    var message = 'Welcome to AbstractAardvark!\n Please select your difficulty:'
+    var messageBox = drawMessageBox(x,y, message);
+    console.log(messageBox)
+    y = y + messageBox.children[1].height()/2
+    var easyButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"easy","#9B88DF", "#4429A1")
+    var mediumButton = drawButton((x + (originalWidth/10)*2),(y+((originalHeight/10)*3.5)),"medium","#FFEE8F","#E9CC25")
+    var hardButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"hard","#D41C1C","#910000")
+    
+    openEvent(easyButton,"easy");
+    openEvent(mediumButton,"medium");
+    openEvent(hardButton,"hard");
+
+
+    console.log(mediumButton)
+    continueLayer.add(messageBox)
+    continueLayer.add(easyButton)
+    continueLayer.add(mediumButton)
+    continueLayer.add(hardButton)
+
+    filterLayer.setAttr('opacity',0.5)
+    filterLayer.children[0].setAttr('visible', true)
+    stage.draw()
 
 }
 
+
+function openEvent(button, diff){
+
+    button.on('click', function(){
+        get_game(diff);
+        start = false
+    })
+}
 
 /*
     function which processes the json data and assigns the relevant
@@ -197,6 +304,10 @@ function highlight(evt, colour, width){
     hierrarchyLayer.draw();
 }
 
+
+/*
+    function to create the options layer 
+*/
 function drawOptions(){
 
     var radius = stageHeight/50
@@ -206,7 +317,8 @@ function drawOptions(){
                      {"inner":"#FF948F","outer":"#E92F25", "id": "hard"}]
     var diff = ["E","M","H"]
 
-    var x = stageWidth*0.46
+    var x = (stageWidth*0.5 )-(radius*3)
+    console.log("x: "+ x)
     var y = 20
     var toggles = []
     for (var i = 0; i < colours.length; i++) {
@@ -219,26 +331,30 @@ function drawOptions(){
     for (var i = 0; i < toggles.length; i++) {
         optionLayer.add(toggles[i])
     };
-    optionLayer.add(drawScore())
+    optionLayer.add(drawText(stageWidth*0.8, 10, 'Score: ' + current_tree.score))
+    diffText = drawText((stageWidth*0.5)-radius*3,10, "choose your difficulty:")
+    diffText.offsetX(diffText.width())
+    optionLayer.add(diffText)
 
 }
 
+/*
+    function to draw toggles for the difficulty at the top of the board
+*/
 function drawToggles(x,y,radius, inner, outer, letter, id){
 
     var group = new Kinetic.Group({
         id: id,
-        draggable: false,
         x: x,
         y: y,
-        height: radius*2,
-        width: radius*2
+
     });
     var strokeWidth = 2
     if (id == current_difficulty){
-        strokeWidth = 3
+        strokeWidth = 4
     }
     var circle = new Kinetic.Circle({
-        x: 0,
+        x: 0+ radius,
         y: 0+radius,
         radius: radius , 
         fill:inner, 
@@ -246,7 +362,7 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
         strokeWidth:strokeWidth 
     })
     var complexText = new Kinetic.Text({
-        x: 0,
+        x: 0+ radius,
         y: 0+radius,
         text: letter,
         fontStyle: 'bold',
@@ -258,12 +374,14 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
     });
     complexText.offsetX(complexText.width()/2);
     complexText.offsetY(complexText.height()/2)
+
     group.add(circle)
     group.add(complexText)
+
     group.siblings = []
     group.on('click', function(){
         if (group.getAttr('id') != current_difficulty){
-            console.log(group.getAttr("siblings"))
+            console.log(group.getAttr("x"))
             for (var i = 0; i < group.siblings.length; i++) {
                 group.siblings[i].children[0].setAttr("strokeWidth",1)
             };
@@ -275,22 +393,24 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
     mouseout(group)
     return group
 }
+
+
 /*
     function to draw the current score
 */
-function drawScore(){
+function drawText(x,y, text){
     var complexText = new Kinetic.Text({
-        x: originalWidth*0.8,
-        y: 0,
-        text: 'Score: ' + current_tree.score,
+        x: x,
+        y: y,
+        text: text,
         fontStyle: 'bold',
         fontSize: fontSize(),
         fontFamily: 'Arial',
         fill: '#555',
-        width: 380,
         padding: 20,
         align: 'center'
     });
+
     complexText.offsetX(complexText.width()/2);
     return complexText
 }
@@ -446,7 +566,7 @@ function drawContinue(){
     })
 
     quitButton.on('click', function(){
-        continueLayer.clear()
+        gameStart()
     })
     continueLayer.add(messageBox)
     continueLayer.add(continueButton)
@@ -486,7 +606,7 @@ function drawMessageBox(x,y, text){
         fontSize: fontSize()*2,
         fontFamily: 'Arial',
         fill: '#555',
-        width: stageWidth/2,
+        // width: stageWidth/2,
         padding: 10,
         align: 'center'
     });
@@ -510,23 +630,27 @@ function drawButton(x,y, text, inner, outer){
     var rect = new Kinetic.Rect({
         x:0,
         y:0,
-        height: originalHeight/10,
+        height: originalHeight/12,
         width: originalWidth/10,
         strokeWidth: 1,
         fill: inner,
         stroke: outer
     });
     var content = new Kinetic.Text({
-        align: "center",
         x: 0,
         y: 0,
         text: text,
         fontSize: fontSize(),
         fontFamily: 'Arial',
         fill: 'black',
-        padding: 6
+        align: "center",
+        width: rect.width(),
+        // height: rect.height()
+
+
     });
-    content.offsetY(-content.height()/2)
+    content.offsetY(-content.height())
+    // content.offsetX(content.width()/2)
     group.add(rect);
     group.add(content);
     mouseover(group);
@@ -728,7 +852,7 @@ function clearDrop(evt){
 function mouseover(group){
     group.on('mouseover touchstart', function(evt) {
         this.moveToTop();
-        console.log(group)
+        console.log(group.getAttr("x")+ " "+ group.getAttr("y"))
         rect = evt.target.parent.children[0];
         rect.setAttr('strokeWidth',2.5);
         answerLayer.draw();
@@ -843,11 +967,13 @@ function fontSize(){
 
 function adjustments(){
     stageWidth = $('#container').width();
-    stageHeight = $(window).height()-150;
+    stageHeight = $(window).height()-50;
     var xRatio = stageWidth/originalWidth;
     var yRatio = stageHeight/originalHeight;
 
     console.log(stageWidth)
+    console.log(stageHeight)
+    console.log($(window).height())
 
     stage.setAttr('width',stageWidth);
     stage.setAttr('height',stageHeight);
