@@ -39,7 +39,7 @@ function gameStart(){
 */
 function get_game(difficulty){
     current_difficulty = difficulty;
-    $.getJSON("http://127.0.0.1:8000/api/games/start/"+current_difficulty+"/",{start: start})
+    $.getJSON("http://abstractaardvark.pythonanywhere.com/api/games/start/"+current_difficulty+"/",{start: start})
     .success(function(data){
         start = false
         current_tree = data;
@@ -919,7 +919,7 @@ function dragend(group){
             });
             $.ajax({
                 type: "POST",
-                url: "http://127.0.0.1:8000/api/games/start/"+current_tree.pk+"/",
+                url: "http://abstractaardvark.pythonanywhere.com/api/games/start/"+current_tree.pk+"/",
 
                 data: "json="+JSON.stringify(current_tree),
                 success:function(data){

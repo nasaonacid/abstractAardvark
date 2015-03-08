@@ -18,7 +18,7 @@ if (pageHeight == null)
 get_game(1);
 function get_game(pk){
 
-    $.getJSON("http://127.0.0.1:8000/api/games/"+pk+"/")
+    $.getJSON("http://abstractaardvark.pythonanywhere.com/api/games/"+pk+"/")
     .success(function(data){
         current_tree = data;
         console.log(current_tree)
