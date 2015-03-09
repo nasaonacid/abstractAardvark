@@ -4,10 +4,12 @@ from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect, HttpResponse
 from abstractAardvark.forms import UserForm
 from django.contrib.auth import logout
+from django.template import *
 
 
 def load_game(request):
-    return render(request,'game.html',{})
+    print RequestContext(request)
+    return render(request,'game.html',context_instance=RequestContext(request))
 
 def permissions_check(user):
     return False

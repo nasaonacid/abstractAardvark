@@ -84,6 +84,10 @@ TEMPLATE_PATH = os.path.join(BASE_DIR,'templates')
 TEMPLATE_DIRS = [
     TEMPLATE_PATH,
 ]
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.core.context_processors.request',
+    'django.contrib.auth.context_processors.auth'
+)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/

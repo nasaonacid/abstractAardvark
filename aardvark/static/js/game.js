@@ -26,6 +26,7 @@ if (stageHeight == null)
 gameStart()
 
 function gameStart(){
+    console.log(url)
     start = true;
     setup()
     drawTitle()
@@ -39,7 +40,7 @@ function gameStart(){
 */
 function get_game(difficulty){
     current_difficulty = difficulty;
-    $.getJSON("http://abstractaardvark.pythonanywhere.com/api/games/start/"+current_difficulty+"/",{start: start})
+    $.getJSON("http://"+url+"/api/games/start/"+current_difficulty+"/",{start: start})
     .success(function(data){
         start = false
         current_tree = data;
@@ -919,7 +920,7 @@ function dragend(group){
             });
             $.ajax({
                 type: "POST",
-                url: "http://abstractaardvark.pythonanywhere.com/api/games/start/"+current_tree.pk+"/",
+                url: "http://"+url+"/api/games/start/"+current_tree.pk+"/",
 
                 data: "json="+JSON.stringify(current_tree),
                 success:function(data){

@@ -26,10 +26,16 @@
             </div>
         {% endblock %}
 {% block scripts %}
+    <script type="text/javascript">
+         url = '{{request.get_host}}'
+    </script>
     <script type="text/javascript" src="{% static 'js/kinetic-v5.1.0.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/tree.js' %}"></script>
     <script type="text/javascript" src = "{% static 'js/game.js'%}"></script>
     <script type="text/javascript">
+         url = '{{request.get_host}}'
+
+        console.log(url)
         $('.btn-primary').on('click',function(){
             $(this).addClass('active').siblings().removeClass('active');
                 console.log($(this).attr('id'));
