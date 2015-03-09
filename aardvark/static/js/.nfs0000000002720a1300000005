@@ -26,12 +26,13 @@ if (stageHeight == null)
 gameStart()
 
 function gameStart(){
-
-    if (typeof(stage)!= "undefined"){
-        stage.destroyChildren();
-        stage.destroy();
-    }
-
+    stage = new Kinetic.Stage({
+        draggable: false,
+        height: stageHeight,
+        width: stageWidth,
+        container: 'container' 
+    });
+    console.log(url)
     start = true;
     setup()
     drawTitle()
@@ -45,14 +46,10 @@ function gameStart(){
 */
 function get_game(difficulty){
     current_difficulty = difficulty;
-    stage.destroyChildren();
-
-    stage.destroy()
     $.getJSON("http://"+url+"/api/games/start/"+current_difficulty+"/",{start: start})
     .success(function(data){
         start = false
-
-
+        stage.destroyChildren();
         current_tree = data;
         initStage();
     })
@@ -75,12 +72,7 @@ function get_game(difficulty){
 }
 
 function setup(){
-    stage = new Kinetic.Stage({
-        draggable: false,
-        height: stageHeight,
-        width: stageWidth,
-        container: 'container' 
-    });
+
     originalHeight = stageHeight;
     originalWidth = stageWidth;
     hierrarchyLayer = new Kinetic.Layer();
@@ -118,7 +110,6 @@ function initStage(){
     stage.add(filterLayer);
 
     stage.add(continueLayer);
-    // console.log(stage)
 }
 
 function drawDiffComplete(){
@@ -149,7 +140,6 @@ function drawDiffComplete(){
 
     filterLayer.setAttr('opacity',0.5)
     filterLayer.children[0].setAttr('visible', true)
-    stage.clear()
     stage.draw()
 }
 
@@ -203,7 +193,6 @@ function drawTitle(){
 
     filterLayer.setAttr('opacity',0.5)
     filterLayer.children[0].setAttr('visible', true)
-    stage.clear()
     stage.draw()
 
 }
@@ -594,7 +583,6 @@ function drawContinue(){
 
     filterLayer.setAttr('opacity',0.5)
     filterLayer.children[0].setAttr('visible', true)
-    stage.clear()
     stage.draw()
 
 }
@@ -829,7 +817,6 @@ function check_all(){
             }
 
         }
-        stage.clear()
         stage.draw()
     };
 
