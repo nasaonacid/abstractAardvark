@@ -1,19 +1,3 @@
-/*
-Created by James Stewart 1000039s
-
-Where is everything????
-
- hierrarchyLayer == empty tree structure
- answerLayer == answer boxes
- continueLayer == title box, difficulty complete box, game finish
- filterLayer == blacked out background for completion   
- optionLayer == scores and difficulty select
-
-
-*/
-
-
-
 var stage;
 
 var hPadding;
@@ -75,20 +59,16 @@ function get_game(difficulty){
     .error(function(jqXHR, status , errorThrown){
                     code = jqXHR.status
                     data = jqXHR.responseJSON
-                    setup();
                     if (code == 404){
                         if (data.error == "diff_completed"){
-                            console.log(stage)
-                            drawDiffComplete()
 
+                            drawDiffComplete()
                         }
                         else if(data.error == "all_completed"){
 
                             drawFinish();
-
                         }
-                        stage.add(filterLayer);
-                        stage.add(continueLayer);
+
                     } 
                 })
     .complete();
@@ -115,7 +95,6 @@ function setup(){
         height: stageHeight,
         visible: false
     }));
-
 }
 
 
@@ -131,14 +110,14 @@ function initStage(){
     drawHierrarchy(current_tree.root);
     drawAnswers(current_tree.answers);
     
+
+
     stage.add(hierrarchyLayer);
     stage.add(answerLayer);
     stage.add(optionLayer);
     stage.add(filterLayer);
 
     stage.add(continueLayer);
-
-
     // console.log(stage)
 }
 
@@ -157,10 +136,8 @@ function drawDiffComplete(){
     var message = current_difficulty + " cleared!\n Why not try another?"
 
     var messageBox = drawMessageBox(x,y, message);
-    var width = messageBox.children[0].width();
-    var height = messageBox.children[0].height();
-    var firstButton = drawButton(x+(width*0.7),y+(height*0.7),choices[0],items[0].inner, items[0].outer)
-    var secondButton = drawButton(x+(width*0.1),y+(height*0.7),choices[1],items[1].inner, items[1].outer)
+    var firstButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),choices[0],items[0].inner, items[0].outer)
+    var secondButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),choices[1],items[1].inner, items[1].outer)
 
     
     openEvent(firstButton,choices[0]);
@@ -170,11 +147,10 @@ function drawDiffComplete(){
     continueLayer.add(firstButton)
     continueLayer.add(secondButton)
 
-    console.log(filterLayer)
     filterLayer.setAttr('opacity',0.5)
     filterLayer.children[0].setAttr('visible', true)
-    continueLayer.children[0].setAttr('opacity',0.75)
-    // continueLayer.draw()    // filterLayer.draw()
+    stage.clear()
+    stage.draw()
 }
 
 function drawFinish(){
@@ -183,10 +159,8 @@ function drawFinish(){
     var message = 'Congratulations!\n You have beat the game!'
 
     var messageBox = drawMessageBox(x,y, message);
-    var width = messageBox.children[0].width();
-    var height = messageBox.children[0].height();
-    var continueButton = drawButton(x+(width*0.7),y+(height*0.7),"submit score","#5ABE66", "#1E8C2C")
-    var quitButton = drawButton(x+(width*0.1),y+(height*0.7),"quit","#D41C1C","#910000")
+    var continueButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"submit score","#5ABE66", "#1E8C2C")
+    var quitButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"quit","#D41C1C","#910000")
     
     continueButton.on('click tap', function(){
         console.log("score submit")
@@ -202,8 +176,7 @@ function drawFinish(){
 
     filterLayer.setAttr('opacity',0.5)
     filterLayer.children[0].setAttr('visible', true)
-    // continueLayer.draw()
-    // filterLayer.draw()
+    stage.draw()
 }
 function drawTitle(){
 
@@ -213,11 +186,10 @@ function drawTitle(){
     var message = 'Welcome to AbstractAardvark!\n Please select your difficulty:'
     var messageBox = drawMessageBox(x,y, message);
 
-    var width = messageBox.children[0].width();
-    var height = messageBox.children[0].height();
-    var easyButton = drawButton(x+(width*0.1),y+(height*0.7),"easy","#9B88DF", "#4429A1")
-    var mediumButton = drawButton(x+(width*0.4),y+(height*0.7),"medium","#FFEE8F","#E9CC25")
-    var hardButton = drawButton(x+(width*0.7),y+(height*0.7),"hard","#D41C1C","#910000")
+    y = y + messageBox.children[1].height()/2
+    var easyButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"easy","#9B88DF", "#4429A1")
+    var mediumButton = drawButton((x + (originalWidth/10)*2),(y+((originalHeight/10)*3.5)),"medium","#FFEE8F","#E9CC25")
+    var hardButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"hard","#D41C1C","#910000")
     
     openEvent(easyButton,"easy");
     openEvent(mediumButton,"medium");
@@ -231,8 +203,8 @@ function drawTitle(){
 
     filterLayer.setAttr('opacity',0.5)
     filterLayer.children[0].setAttr('visible', true)
-    // continueLayer.draw()
-    // filterLayer.draw()
+    stage.clear()
+    stage.draw()
 
 }
 
@@ -353,16 +325,16 @@ function highlight(evt, colour, width){
 */
 function drawOptions(){
 
-    var radius = (stageHeight/50)*1.6
+    var radius = stageHeight/50
 
     var colours = [{"inner":"#C4B7F1", "outer":"#4429A1", "id":"easy"},
                     {"inner":"#FFEE8F","outer":"#E9CC25", "id": "medium"},
                      {"inner":"#FF948F","outer":"#E92F25", "id": "hard"}]
-    var diff = ["Easy","Med","Hard"]
+    var diff = ["E","M","H"]
 
     var x = (stageWidth*0.5 )-(radius*3)
 
-    var y = (stageHeight/99)*2
+    var y = 20
     var toggles = []
     for (var i = 0; i < colours.length; i++) {
         toggles.push(drawToggles(x,y,radius,colours[i].inner,colours[i].outer, diff[i], colours[i].id));
@@ -374,10 +346,10 @@ function drawOptions(){
     for (var i = 0; i < toggles.length; i++) {
         optionLayer.add(toggles[i])
     };
-    optionLayer.add(drawText(stageWidth*0.8, y, 'Score: ' + current_tree.score))
-    // diffText = drawText((stageWidth*0.5)-radius*3,y-radius, "choose your difficulty:")
-    // diffText.offsetX(diffText.width())
-    // optionLayer.add(diffText)
+    optionLayer.add(drawText(stageWidth*0.8, 10, 'Score: ' + current_tree.score))
+    diffText = drawText((stageWidth*0.5)-radius*3,10, "choose your difficulty:")
+    diffText.offsetX(diffText.width())
+    optionLayer.add(diffText)
 
 }
 
@@ -397,7 +369,7 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
         strokeWidth = 4
     }
     var circle = new Kinetic.Circle({
-        x: 0,
+        x: 0+ radius,
         y: 0+radius,
         radius: radius , 
         fill:inner, 
@@ -405,7 +377,7 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
         strokeWidth:strokeWidth 
     })
     var complexText = new Kinetic.Text({
-        x: 0,
+        x: 0+ radius,
         y: 0+radius,
         text: letter,
         fontStyle: 'bold',
@@ -423,8 +395,8 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
 
     group.siblings = []
 
-    toggleEvent(group, 'click tap')
-
+    toggleEvent(group, 'click')
+    toggleEvent(group, 'tap')
     mouseover(group)
     mouseout(group)
     return group
@@ -434,10 +406,9 @@ function toggleEvent(group, type){
 
     group.on(type, function(){
         if (group.getAttr('id') != current_difficulty){
-            group.setAttr("opacity",1)
+
             for (var i = 0; i < group.siblings.length; i++) {
                 group.siblings[i].children[0].setAttr("strokeWidth",1)
-                group.siblings[i].setAttr("opacity", 0.5);
             };
             get_game(group.getAttr("id"));
         } 
@@ -607,11 +578,8 @@ function drawContinue(){
     var message = 'Congratulations!\n Do you wish to continue?'
 
     var messageBox = drawMessageBox(x,y, message);
-    var width = messageBox.children[0].width();
-    var height = messageBox.children[0].height();
-    console.log(width +" "+ height)
-    var continueButton = drawButton((x + (width*0.7)),(y+(height*0.75)),">","#5ABE66", "#1E8C2C", true)
-    var quitButton = drawButton((x + (width*0.1)),(y+(height*0.75)),"X","#D41C1C","#910000", true)
+    var continueButton = drawButton((x + (originalWidth/10)*3.5),(y+((originalHeight/10)*3.5)),"continue","#5ABE66", "#1E8C2C")
+    var quitButton = drawButton((x + (originalWidth/10)*0.5),(y+((originalHeight/10)*3.5)),"quit","#D41C1C","#910000")
     
     continueButton.on('click tap', function(){
         get_game(current_difficulty);
@@ -626,9 +594,8 @@ function drawContinue(){
 
     filterLayer.setAttr('opacity',0.5)
     filterLayer.children[0].setAttr('visible', true)
-    continueLayer.children[0].setAttr('opacity', 0.85)
-    continueLayer.draw()
-    filterLayer.draw()
+    stage.clear()
+    stage.draw()
 
 }
 
@@ -660,7 +627,7 @@ function drawMessageBox(x,y, text){
         fontSize: fontSize()*2,
         fontFamily: 'Arial',
         fill: '#555',
-        width: rect.width(),
+        // width: stageWidth/2,
         padding: 10,
         align: 'center'
     });
@@ -673,7 +640,7 @@ function drawMessageBox(x,y, text){
 /*
     draws clickable buttons on the interface for the continue screen
 */
-function drawButton(x,y, text, inner, outer, cort){
+function drawButton(x,y, text, inner, outer){
 
     //stageheight calculation is the 
     var group = new Kinetic.Group({
@@ -697,19 +664,13 @@ function drawButton(x,y, text, inner, outer, cort){
         fontSize: fontSize(),
         fontFamily: 'Arial',
         fill: 'black',
-        style:'bold',
         align: "center",
         width: rect.width(),
         // height: rect.height()
-    });
 
-    if (cort){
-        content.setAttr("fontSize",rect.height());
-        content.setAttr("fill","white");
-    }
-    else{
-        content.offsetY(-content.height())
-    }
+
+    });
+    content.offsetY(-content.height())
     // content.offsetX(content.width()/2)
     group.add(rect);
     group.add(content);
@@ -868,10 +829,10 @@ function check_all(){
             }
 
         }
-        
-        // answerLayer.draw()
+        stage.clear()
+        stage.draw()
     };
-    answerLayer.draw()
+
 }
 
 /*
@@ -948,7 +909,7 @@ function dragstart(group){
             evt.target.currentMatch = null;
 
         }
-        // stage.draw();
+        stage.draw();
     });
 
 }
@@ -984,7 +945,7 @@ function dragend(group){
 
                     var status = processPostSucess(data, evt.target.find('Text')[0].getAttr('text'));
                     check_all();
-                    // stage.draw();
+                    stage.draw();
                 },
                 error: function(jqXHR, status , errorThrown){
 
@@ -1034,6 +995,6 @@ function adjustments(){
     
     stage.setScaleX(xRatio);
     stage.setScaleY(yRatio);
-
+    stage.draw();
 
 }

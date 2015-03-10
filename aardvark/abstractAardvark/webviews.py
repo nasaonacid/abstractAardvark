@@ -74,7 +74,7 @@ def register(request):
     if request.method == 'POST':
 
         user_form = UserForm(data=request.POST)
-        print user_form
+        # print user_form
 
         if user_form.is_valid():
 
