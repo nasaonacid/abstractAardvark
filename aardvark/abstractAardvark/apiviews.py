@@ -158,7 +158,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
                     root = game.root
 
                     request.session['correct'] = 0
-
+                    print postRoot
                     valid = check_tree_improved(root, postRoot, request.session)
 
                     
@@ -168,6 +168,7 @@ def game_control(request,pk = None,diff = 'easy', format = None):
                         request.session['score'] += choices.index(diff)+1
 
                     if valid:
+                        print serializer.data
                         return Response(serializer.data, status = status.HTTP_200_OK)
                     else:
                         return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
@@ -310,22 +311,127 @@ def check_tree_post(node, answer_node, session):
     return valid
 
 
+'''
+Function which checks the tree allowing for balanced branch comparison
+Parameters:
+    data = a node from the database
+    json = a node from the json post
+    session = the request session object
 
+
+'''
 def check_tree_improved(data, json, session):
 
     valid = True
-    json['correct'] = None
+    check_content(data,json,session)
+    valid = check_errors(data,json)
+
+    if valid:
+        
+        has_answers = False
+        with_answer = []
+        dChildren = data.get_children()
+        
+        #check the current nodes children to see if they have been given an answer
+        for i in json['children']:
+        
+            if i['content'] != " ":
+                has_answers = True
+                with_answer.append(True)
+            else:
+                with_answer.append(False)
+        #if not match the nodes to their immediate match in the database tree
+        if not has_answers:
+            print "no answers"
+            for i in range(0,len(json['children'])):
+                valid = check_tree_improved(dChildren[i],json['children'][i],session)
+        #otherwise perform other checks
+        else:
+            
+            balanced_with = []
+            available = []
+            
+            #check the children nodes in the database against their siblings to see if we have balanced sub branches and mark each data node as untaken
+            for i in dChildren:
+                available.append(True)
+                mirror = []
+
+                for j in range(0, len(dChildren)):                        
+                    if i != dChildren[j] and dChildren[j].balance == i.balance:
+                        mirror.append(j)
+
+                balanced_with.append(mirror)
+            limbo = []
     
+            #select which nodes to match with the json post nodes
+            for i in range(0,len(json['children'])):
+
+                #if this child is has no balanced siblings match it straight with its inplace match
+                if balanced_with[i] == []:
+
+                    available[i] = False
+                    valid = check_tree_improved(dChildren[i], json['children'][i], session)
+
+                #if it has a balanced sibling but the inplace match is untaken and shares the same content, consume it
+                elif json['children'][i]['content'] == dChildren[i].content and available[i]:
+
+                    available[i] = False
+                    valid = check_tree_improved(dChildren[i], json['children'][i], session)
+
+                #otherwise
+                else:
+
+                    matched = False
+                    #check each item the node is symmetrical to
+                    for j in balanced_with[i]:
+                        #match with the first symmetrical node available which has the same content
+                        if available[j]:
+                            if json['children'][i]['content'] == dChildren[j].content:
+
+                                available[j] = False
+                                matched = True
+                                valid = check_tree_improved(dChildren[j], json['children'][i], session)
+                    #if no match with same content, add the node to the limbo list for unmatched nodes
+                    if not matched:
+                        limbo.append(json['children'][i])
+            #check the limbo'd nodes
+            for i in limbo:
+
+                for j in range(0,len(available)):
+                    #match node with the first available node
+                    if(available[j]):
+                        print "match"
+                        print i
+                        available[j] = False
+                        valid = check_tree_improved(dChildren[j], i, session)
+                        break
+
+
+        return valid
+
+'''
+Function to validate the posted content of the node
+'''
+def check_content(data, json, session):
+    
+    json['correct'] = None
     if json['content'] == " ":
 
         json['correct'] = None
     elif json['content'] != data.content :
+
         json['correct'] = False
     
     elif json['content'] == data.content:
+
         json['correct'] = True
         session['correct'] += 1
-    
+
+'''
+Function to check the current post node for errors
+'''
+def check_errors(data,json):
+    valid = True
     json['errors'] = {}
     
     if json['level'] != data.get_level():
@@ -338,75 +444,4 @@ def check_tree_improved(data, json, session):
         valid = False
         json['errors']['children'] = "incorrect number of children for this node "
     
-    else:
-        
-        has_answers = False
-        with_answer = []
-        dChildren = data.get_children()
-        
-        for i in json['children']:
-        
-            if i['content'] != " ":
-                has_answers = True
-                with_answer.append(True)
-            else:
-                with_answer.append(False)
-        
-        if not has_answers:
-
-            for i in range(0,len(json['children'])):
-                valid = check_tree_improved(dChildren[i],json['children'][i],session)
-        
-        else:
-            
-            balanced_with = []
-            available = []
-            
-
-            for i in dChildren:
-                available.append(True)
-                mirror = []
-
-                for j in range(0, len(dChildren)):                        
-                    if i != dChildren[j] and dChildren[j].balance == i.balance:
-                        mirror.append(j)
-
-                balanced_with.append(mirror)
-            limbo = []
-    
-
-            for i in range(0,len(json['children'])):
-
-                if balanced_with[i] == []:
-
-                    available[i] = False
-                    valid = check_tree_improved(dChildren[i], json['children'][i], session)
-
-                elif json['children'][i]['content'] == dChildren[i].content and available[i]:
-
-                    available[i] = False
-                    valid = check_tree_improved(dChildren[i], json['children'][i], session)
-
-                else:
-
-                    matched = False
-                    for j in balanced_with[i]:
-                        if available[j]:
-                            if json['children'][i]['content'] == dChildren[j].content:
-                                available[j] = False
-                                matched = True
-                                valid = check_tree_improved(dChildren[j], json['children'][i], session)
-                    if not matched:
-
-                        limbo.append(json['children'][i])
-          
-            for i in limbo:
-
-                for j in range(0,len(available)):
-                    if(available[j]):
-
-                        available[j] = False
-                        valid = check_tree_improved(dChildren[j], i, session)
-
-
-        return valid
+    return valid
