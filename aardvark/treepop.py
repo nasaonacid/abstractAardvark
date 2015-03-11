@@ -39,7 +39,7 @@ class Node(object):
  
     def __str__(self, level=0):
         node = "\t" * level + str(self.content) + "\n"
-        print node
+        # print node
         for child in self.children:
             node += child.__str__(level+1)
         return node
@@ -63,6 +63,7 @@ def wordnet_tree(word,parent = None):
                         node.children.append(next)
     else:
         # if node.content.isalpha():
+
         for i in children:
             if i.name().split(".")[1] == "n":
                 next = wordnet_tree(i,node)
@@ -85,11 +86,11 @@ def process_tree(node, users):
     process_list.append(node)
     iteration= 0
 
-    while iteration <500 and process_list:
-        iteration+=1
+    while iteration <= 5000 and process_list:
+        iteration += 1
         current = process_list.pop()
         if len(current.children)>1:
-            if current.content.isalpha():
+            if current.content.isalpha() and len(current.content)<8:
 
                 root, height= process_node(current)
                 height += 1 ##correction for 0 based level
@@ -155,7 +156,7 @@ def process_file(filename,users):
 def populate():
     x = create_wordnet_tree("object")
     users = []
-    print x.children
+    # print x.children
     users.append(add_superuser(username="nasaonacid", password="password"))
     users.append(add_superuser(username="michaelroddy", password="password"))
     users.append(add_superuser(username="KombuchaShroomz", password="password"))
