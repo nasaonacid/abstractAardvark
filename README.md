@@ -8,4 +8,4 @@ Also please ensure that you add the environment variable NLTK_DATA pointing it t
 
 For UNIX based OS:
 	Please add the following to your .bashrc file
-		"export NLTK_DATA=$NLTK_DATA:/home/nasaonacid/abstractAardvark/data_gathering/nltk_data"
+		"export NLTK_DATA=$NLTK_DATA:<path_to_repo>/data_gathering/nltk_data"
