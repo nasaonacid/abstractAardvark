@@ -89,3 +89,24 @@ class PaginatedTreeSerializer(PaginationSerializer):
         object_serializer_class = TreeSerializer
 
 
+class NodeSerializerDummy(serializers.ModelSerializer):
+    balance = serializers.CharField(required = False)
+
+    class Meta:
+        model = Node
+        fields = ('content','level','children', 'balance')
+        depth = 1
+
+class TreeSerializerDummy(serializers.ModelSerializer):
+    root = NodeSerializerDummy()
+    creator = serializers.ReadOnlyField(source = 'creator.username')
+    
+    class Meta:
+        model = Tree
+        fields = ('height','difficulty','root', 'creator')
+        depth = 1
+
+class PaginatedTreeSerializerDummy(PaginationSerializer):
+
+    class Meta:
+        object_serializer_class = TreeSerializerDummy

@@ -39,6 +39,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'abstractAardvark',
     'mptt',
+    'rest_framework_swagger',
 
 )
 
@@ -104,5 +105,6 @@ STATICFILES_DIRS = (
 #rest framework details
 
 REST_FRAMEWORK = {
+
     'PAGINATE_BY':10
 }
