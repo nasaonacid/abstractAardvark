@@ -22,22 +22,17 @@ var answerLayer;
 var continueLayer;
 var filterLayer;
 var optionLayer;
+var interimLayer;
 var current_tree; 
 var current_difficulty;
 
-var stageWidth = $("#container").width();
-var stageHeight = $(window).height()-50;
+var stageWidth = $(window).width();
+var stageHeight = $(window).height()-70;
 var originalWidth = stageWidth;
 var originalHeight = stageHeight;
 var start = true;
 var csrftoken = getCookie('csrftoken');
 
-//instantiation of page size (temporary until dynamic size can be set with divs. Perhaps dynamic redraw)
-
-if(stageWidth == null)
-    stageWidth = 1024;
-if (stageHeight == null)
-    stageHeight = 800;
 
 gameStart()
 
@@ -108,7 +103,7 @@ function setup(){
     continueLayer = new Kinetic.Layer();
     filterLayer = new Kinetic.Layer({opacity: 0});
     optionLayer = new Kinetic.Layer();
-
+    interimLayer = new Kinetic.Layer();
     filterLayer.add(new Kinetic.Rect({
         fill: 'black',
         width: stageWidth,
@@ -137,6 +132,7 @@ function initStage(){
     stage.add(filterLayer);
 
     stage.add(continueLayer);
+    stage.add(interimLayer);
 
 
     // console.log(stage)
@@ -372,6 +368,7 @@ function drawOptions(){
     toggles[1].setAttr("siblings",[toggles[0],toggles[2]]);
     toggles[2].setAttr("siblings",[toggles[0],toggles[1]]);
     for (var i = 0; i < toggles.length; i++) {
+        toggleEvent(toggles[i], 'click tap')
         optionLayer.add(toggles[i])
     };
     optionLayer.add(drawText(stageWidth*0.8, y, 'Score: ' + current_tree.score))
@@ -390,6 +387,7 @@ function drawToggles(x,y,radius, inner, outer, letter, id){
         id: id,
         x: x,
         y: y,
+        opacity:1
 
     });
     var strokeWidth = 2
@@ -434,12 +432,15 @@ function toggleEvent(group, type){
 
     group.on(type, function(){
         if (group.getAttr('id') != current_difficulty){
-            group.setAttr("opacity",1)
-            for (var i = 0; i < group.siblings.length; i++) {
-                group.siblings[i].children[0].setAttr("strokeWidth",1)
-                group.siblings[i].setAttr("opacity", 0.5);
+            // group.setAttr("opacity",1)
+            // console.log(group.getAttr('siblings'))
+            for (var i = 0; i < group.getAttr('siblings').length; i++) {
+                group.getAttr('siblings')[i].children[0].setAttr("strokeWidth",1)
+                // group.getAttr('siblings')[i].children[0].setAttr("opacity", 0);
+                // console.log(group.getAttr('siblings')[i])
             };
             get_game(group.getAttr("id"));
+            // optionLayer.draw()
         } 
     
     })
@@ -582,6 +583,7 @@ function processPostSucess(data, content){
         drawContinue();
 
     }
+    console.log(data.root)
     data_list.push(data.root);
     current_list.push(current_tree.root)
     while (data_list.length >0){
@@ -806,6 +808,8 @@ function checkMatch(item){
     var dropX = current_tree.boxWidth / 2
     var dropY = current_tree.boxHeight / 2
     var node = current_tree.root;
+    console.log("here")
+    console.log(current_tree)
     var process_list = [];
     process_list.push(node);
 
@@ -814,12 +818,13 @@ function checkMatch(item){
 
         if(Math.abs(x - current.x) <= dropX && Math.abs(y-current.y)<= dropY){
 
-
+            console.log("matched")
             if( current.correct== null){
 
                 item.currentMatch = current;
-
+                console.log(item.find('Text')[0].getAttr('text'))
                 current.content = item.find('Text')[0].getAttr('text');
+                console.log(current.content)
                 return {'x':current.x, 'y':current.y};
             }
         }
@@ -827,6 +832,7 @@ function checkMatch(item){
             process_list.push(current.children[i]);
         }
     }
+    console.log("sad face clown")
     return null; 
 
     
@@ -848,7 +854,7 @@ function check_all(){
     for (var i = 0; i < answerLayer.children.length; i++) {
         if (answerLayer.children[i].currentMatch!= undefined){
 
-            if (answerLayer.children[i].currentMatch.correct !=true){
+            if (answerLayer.children[i].currentMatch.correct ==false){
 
                 answerLayer.children[i].setAttr('draggable',true);
                 answerLayer.children[i].children[0].setAttr('stroke','#910000');
@@ -916,7 +922,7 @@ function mouseover(group){
 
         rect = evt.target.parent.children[0];
         rect.setAttr('strokeWidth',2.5);
-        answerLayer.draw();
+        answerLayer.batchDraw();
         document.body.style.cursor = 'pointer';
     });
 }
@@ -973,11 +979,13 @@ function dragend(group){
                     }
                 }
             });
+            console.log(JSON.stringify(current_tree))
             $.ajax({
                 type: "POST",
                 url: "http://"+url+"/api/games/start/"+current_tree.pk+"/",
 
                 data: "json="+JSON.stringify(current_tree),
+
                 success:function(data){
 
 
@@ -1024,7 +1032,7 @@ function fontSize(){
 */
 
 function adjustments(){
-    stageWidth = $('#container').width();
+    stageWidth = $(window).width();
     stageHeight = $(window).height()-50;
     var xRatio = stageWidth/originalWidth;
     var yRatio = stageHeight/originalHeight;
